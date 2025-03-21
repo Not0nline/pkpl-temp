@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Tibib{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <h1>Welcome to Tibib Dashboard</h1>
+    <div class="user-info">
+        <p>You are logged in as: <span class="highlight">{{ user_role }}</span></p>
+        <p>Phone Number: <span class="highlight">{{ country_code }}-{{ phone_number }}</span></p>
+        <p>Card Number: <span class="highlight">{{ card_number }}</span></p>
+    </div>
+    
+    <div class="actions">
+        <a href="{% url 'logout' %}" class="btn btn-logout">Logout</a>
+    </div>
+</div>
+{% endblock %}

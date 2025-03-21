@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Tibib{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Login</h2>
+    {% if error %}
+    <div class="error-message">
+        {{ error }}
+    </div>
+    {% endif %}
+    <form id="loginForm" method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="country_code">Country Code</label>
+            <input type="text" id="country_code" name="country_code" placeholder="+62" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="phone_number">Phone Number</label>
+            <input type="text" id="phone_number" name="phone_number" placeholder="1234567890" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+        </div>
+        
+        <button type="submit" class="btn">Login</button>
+        
+        <div class="form-footer">
+            Don't have an account? <a href="{% url 'register' %}">Register</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
