@@ -8,4 +8,5 @@ urlpatterns = [
     path("get-payment-by-user/<uuid:user_id>/", get_payments_by_user, name="get_payments_by_user"),
     path("create-unitdibeli", create_unit_dibeli, name="create_unit_dibeli"),
     path("get-unitdibeli-by-user/<uuid:user_id>/", get_units_by_user, name="get_units_by_user"),
+    path('get-reksadana-history/<uuid:id_reksadana>/', get_reksadana_history, name="get_reksadana_history")
 ]
