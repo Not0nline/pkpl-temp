@@ -121,3 +121,10 @@ def get_units_by_user(request, user_id):
         return JsonResponse(list(units), safe=False)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
+def get_reksadana_history(request, id_reksadana):
+    if request.method == "GET":
+        reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
+        reksadana.generate_made_up_history_per_hour()
+        return JsonResponse(list(HistoryReksadana.objects.filter(id_reksadana=reksadana).values()), safe=False)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
