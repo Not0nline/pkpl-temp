@@ -14,7 +14,6 @@ class JWTAuthenticationMiddleware:
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
             try:
-                print("zczc",settings.JWT_SECRET_KEY)
                 payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
                 request.user_id = payload["id"]  # Attach user ID to request
                 request.user_username = payload['username']
