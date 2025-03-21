@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'dashboard',
     'auth_page',
+    'reksadana_rest',
 ]
 
 MIDDLEWARE = [
