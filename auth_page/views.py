@@ -1,10 +1,9 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-import json
+import os
 import requests
 
-# API endpoint
-API_BASE_URL = "http://localhost:8001"
+API_BASE_URL = os.environ.get('API_BASE_URL')
 
 def register_view(request):
     if request.method == 'POST':
@@ -24,8 +23,8 @@ def register_view(request):
             }
             
             # Make API request
-            response = requests.post(f"{API_BASE_URL}/register/", 
-                                     json=payload, 
+            response = requests.post(f"{API_BASE_URL}/register/",
+                                     json=payload,
                                      headers={'Content-Type': 'application/json'})
             
             if response.status_code == 200:

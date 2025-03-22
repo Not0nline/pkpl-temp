@@ -2,7 +2,7 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('create-reksadana',create_reksadana, name="create_reksadana"),
+    path('create-reksadana/',create_reksadana, name="create_reksadana"),
     path('get-all-reksadana/',get_all_reksadana, name="get_all_reksadana"),
     path("create-payment/", create_payment, name="create_payment"),
     path("get-payment-by-user/", get_payments_by_user, name="get_payments_by_user"),
