@@ -10,6 +10,10 @@ class JWTAuthenticationMiddleware:
 
     def __call__(self, request):
         auth_header = request.headers.get("Authorization")
+
+        if not auth_header:
+            return JsonResponse({"error": "Authorization header missing"}, status=401)
+
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
             try:

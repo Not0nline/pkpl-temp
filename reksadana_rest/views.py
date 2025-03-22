@@ -2,8 +2,31 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import *
-import uuid
 import json
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
+import os
+import base64
+
+AES_KEY = base64.b64decode(os.getenv("AES_KEY"))
+AES_IV = base64.b64decode(os.getenv("AES_IV"))
+
+# Function to decrypt a single value using AES
+def decode_value(encrypted_value):
+    """
+    Decrypts a single value using AES.
+    """
+    cipher = Cipher(algorithms.AES(AES_KEY), modes.CBC(AES_IV), backend=default_backend())
+    decryptor = cipher.decryptor()
+
+    encrypted_bytes = bytes.fromhex(encrypted_value)  # Convert hex string to bytes
+    decrypted_data = decryptor.update(encrypted_bytes) + decryptor.finalize()
+
+    unpadder = padding.PKCS7(128).unpadder()
+    unpadded_data = unpadder.update(decrypted_data) + unpadder.finalize()
+
+    return unpadded_data.decode('utf-8')
 
 @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
@@ -46,9 +69,10 @@ def create_reksadana(request):
     #TODO bikin htmlnya
     # return render(request, "beli_reksadana.html")
 
-def get_all_reksadana(_):
-    reksadana_list = Reksadana.objects.all().values()
-    return JsonResponse({"reksadana": list(reksadana_list)}, status=200)
+def get_all_reksadana(request):
+    if request.method == "GET":
+        reksadana_list = Reksadana.objects.all().values()
+        return JsonResponse({"reksadana": list(reksadana_list)}, status=200)
 
 @csrf_exempt
 def create_payment(request):
@@ -57,7 +81,7 @@ def create_payment(request):
             user_id = request.user_id
             data = json.loads(request.body)
             id_reksadana = data.get("id_reksadana")
-            nominal = data.get("nominal")
+            nominal = decode_value(data.get("nominal"))
 
             if not user_id or not id_reksadana or not nominal:
                 return JsonResponse({"error": "Missing required fields"}, status=400)
@@ -94,7 +118,7 @@ def create_unit_dibeli(request):
             user_id = request.user_id
             data = json.loads(request.body)
             id_reksadana = data.get("id_reksadana")
-            nominal = data.get("nominal")
+            nominal = decode_value(data.get("nominal"))
 
             if not user_id or not id_reksadana or not nominal:
                 return JsonResponse({"error": "Missing required fields"}, status=400)
