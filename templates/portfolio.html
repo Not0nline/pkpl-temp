@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}My Portfolio - Tibib{% endblock %}
+
+{% block content %}
+<div class="portfolio-container">
+    <h2>My Investment Portfolio</h2>
+    
+    {% if units %}
+        <div class="portfolio-list">
+            {% for unit in units %}
+                <div class="portfolio-item">
+                    <h3>{{ unit.id_reksadana.name }}</h3>
+                    <p><strong>Purchase Date:</strong> {{ unit.waktu_pembelian }}</p>
+                    <p><strong>Amount:</strong> IDR {{ unit.nominal }}</p>
+                    <p><strong>Current Value:</strong> IDR {{ unit.current_value }}</p>
+                    
+                    <form method="POST" action="{% url 'jual_unitdibeli' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="id_unitdibeli" value="{{ unit.id }}">
+                        <button type="submit" class="btn btn-danger">Sell Units</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>You don't have any investments yet.</p>
+        <a href="/dashboard/" class="btn btn-primary">Explore Reksadana</a>
+    {% endif %}
+</div>
+{% endblock %}

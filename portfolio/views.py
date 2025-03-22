@@ -16,7 +16,7 @@ def index(request):
         # di tiap unit dalam daftarnya ada tombol jual aja, biar
         # gk usah bikin file tampilin detail lagi 
         # Jangan lupa buat simpen id unitdibeli supaya bisa sell
-        return render(request, 'portfolio.html', context=data)
+        return render(request, 'portfolio.html', context={"units": data})
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 # TODO: Not tested with postman

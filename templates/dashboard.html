@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Tibib{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h2>Reksadana Dashboard</h2>
+    
+    <div class="reksadana-list">
+        {% if reksadana %}
+            {% for item in reksadana %}
+                <div class="reksadana-card">
+                    <h3>{{ item.name }}</h3>
+                    <p><strong>Category:</strong> {{ item.category }}</p>
+                    <p><strong>NAV:</strong> {{ item.nav }}</p>
+                    <p><strong>AUM:</strong> {{ item.aum }}</p>
+                    <p><strong>Risk Level:</strong> {{ item.tingkat_resiko }}</p>
+                    <a href="{% url 'beli_unit' item.id_reksadana %}" class="btn btn-primary">Buy Units</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No reksadana available at the moment.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

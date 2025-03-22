@@ -13,7 +13,7 @@ def index(request):
         return JsonResponse({"error": "Unauthorized"}, status=401)
     reksadanas = json.loads(get_all_reksadana(request).content)['reksadana']
     #TODO: Bikin html dashboard
-    return render(request, "dashboard.html", context=reksadanas)
+    return render(request, "dashboard.html", context={"reksadanas": reksadanas})
 
 #TODO: NOT TESTED BY POSTMAN
 

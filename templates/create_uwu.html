@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Create UWU - Tibib{% endblock %}
+
+{% block content %}
+<div class="create-uwu-container">
+    <h2>Create UWU</h2>
+    
+    <form method="POST" action="{% url 'create_uwu' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="uwu_name">UWU Name:</label>
+            <input type="text" id="uwu_name" name="uwu_name" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="uwu_description">Description:</label>
+            <textarea id="uwu_description" name="uwu_description" class="form-control" rows="4"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="uwu_value">Value:</label>
+            <input type="number" id="uwu_value" name="uwu_value" class="form-control" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Create UWU</button>
+        <a href="{% url 'staff_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

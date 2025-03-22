@@ -7,7 +7,6 @@ import json
 
 @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
-    # if request.method == "POST":
         try:
             data = json.loads(request.body)
 
@@ -133,7 +132,6 @@ def get_reksadana_history(request, id_reksadana):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 def edit_reksadana(request):
-    # if request.method == "POST":
     try:
         data = json.loads(request.body)
         id_reksadana = data.get("id_reksadana")
