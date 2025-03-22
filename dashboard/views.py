@@ -38,8 +38,14 @@ def index(request):
     #TODO: Bikin html dashboard
     return render(request, "dashboard.html", context={"reksadanas": reksadanas})
 
+<<<<<<< HEAD
+#TODO: NOT TESTED BY POSTMAN
+
+def beli_unit(request, reksadana_id):
+=======
 @csrf_exempt
 def beli_unit(request):
+>>>>>>> 88b05c8c28ff8524e3778b04891526348f81313b
     if not hasattr(request, "user_id"):
         return JsonResponse({"error": "Unauthorized"}, status=401)
     if request.method=='POST':
@@ -62,8 +68,13 @@ def beli_unit(request):
 
         requests.post(
             f"{base_url}/dashboard/process-payment/",  # Full URL
+<<<<<<< HEAD
+            son={"id_unitdibeli": id_unitdibeli},
+            headers=headers,  # Pass headers here
+=======
             json=data,
             headers=headers, 
+>>>>>>> 88b05c8c28ff8524e3778b04891526348f81313b
         )
         
         return redirect('/dashboard/')
