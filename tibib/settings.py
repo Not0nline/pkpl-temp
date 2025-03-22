@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'dashboard',
     'auth_page',
     'reksadana_rest',
+    'portfolio',
+    'staff'
 ]
 
 MIDDLEWARE = [
