@@ -1,7 +1,9 @@
 from django.urls import path
 
-from . import views
+from .views import *
 
 urlpatterns = [
-    path("", views.protected_view, name="index"),
+    path("", index, name="index"),
+    path("beli-unit/", beli_unit, name="beli_unit"),
+    path('process-payment/', process_payment, name="process_payment")
 ]

@@ -56,8 +56,8 @@ def get_all_reksadana(_):
 def create_payment(request):
     if request.method == "POST":
         try:
+            user_id = request.user_id
             data = json.loads(request.body)
-            user_id = data.get("user_id")
             id_reksadana = data.get("id_reksadana")
             nominal = data.get("nominal")
 
@@ -70,7 +70,8 @@ def create_payment(request):
             payment = Payment.objects.create(
                 user_id=user_id,
                 id_reksadana=reksadana,
-                nominal=nominal
+                nominal=nominal,
+                waktu_pembelian = datetime.datetime.now()
             )
 
             return JsonResponse({"message": "Payment created", "payment_id": payment.id}, status=201)
@@ -80,8 +81,9 @@ def create_payment(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-def get_payments_by_user(request, user_id):
+def get_payments_by_user(request):
     if request.method == "GET":
+        user_id = request.user_id
         payments = Payment.objects.filter(user_id=user_id).values()
         return JsonResponse(list(payments), safe=False)
 
@@ -91,8 +93,8 @@ def get_payments_by_user(request, user_id):
 def create_unit_dibeli(request):
     if request.method == "POST":
         try:
+            user_id = request.user_id
             data = json.loads(request.body)
-            user_id = data.get("user_id")
             id_reksadana = data.get("id_reksadana")
             nominal = data.get("nominal")
 
@@ -105,7 +107,8 @@ def create_unit_dibeli(request):
             unit = UnitDibeli.objects.create(
                 user_id=user_id,
                 id_reksadana=reksadana,
-                nominal=nominal
+                nominal=nominal,
+                waktu_pembelian = datetime.datetime.now()
             )
 
             return JsonResponse({"message": "Unit dibeli created", "unit_id": unit.id}, status=201)
@@ -115,8 +118,9 @@ def create_unit_dibeli(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-def get_units_by_user(request, user_id):
+def get_units_by_user(request):
     if request.method == "GET":
+        user_id = request.user_id
         units = UnitDibeli.objects.filter(user_id=user_id).values()
         return JsonResponse(list(units), safe=False)
 
@@ -128,3 +132,9 @@ def get_reksadana_history(request, id_reksadana):
         reksadana.generate_made_up_history_per_hour()
         return JsonResponse(list(HistoryReksadana.objects.filter(id_reksadana=reksadana).values()), safe=False)
     return JsonResponse({"error": "Invalid request method"}, status=405)
+
+@csrf_exempt
+def delete_unit_dibeli_by_id(request):
+    if request.method == 'POST':
+        #TODO: Implement this
+        raise NotImplementedError
