@@ -16,6 +16,7 @@ def index(request):
     return render(request, "dashboard.html", context=reksadanas)
 
 #TODO: NOT TESTED BY POSTMAN
+
 def beli_unit(request, reksadana_id):
     if not hasattr(request, "user_id"):
         return JsonResponse({"error": "Unauthorized"}, status=401)
@@ -33,7 +34,7 @@ def beli_unit(request, reksadana_id):
         }
 
         requests.post(
-            f"{base_url}/portfolio/process-sell/",  # Full URL
+            f"{base_url}/dashboard/process-payment/",  # Full URL
             son={"id_unitdibeli": id_unitdibeli},
             headers=headers,  # Pass headers here
         )

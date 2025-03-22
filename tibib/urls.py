@@ -23,4 +23,5 @@ urlpatterns = [
     path('', include('auth_page.urls')),
     path('reksadana/', include('reksadana_rest.urls')),
     path('portfolio/', include('portfolio.urls')),
+    path('staff/', include('staff.urls')),
 ]

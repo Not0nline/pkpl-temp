@@ -15,7 +15,7 @@ class JWTAuthenticationMiddleware:
             try:
                 payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
                 request.user_id = payload["id"]  # Attach user ID to request
-                request.user_username = payload['username']
+                request.user_username = payload['full_phone']
                 request.user_role = payload['role']
             except jwt.ExpiredSignatureError:
                 return JsonResponse({"error": "Token has expired"}, status=401)

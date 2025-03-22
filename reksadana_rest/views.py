@@ -7,8 +7,7 @@ import json
 
 @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
-    if request.method == "POST":
-
+    # if request.method == "POST":
         try:
             data = json.loads(request.body)
 
@@ -46,7 +45,7 @@ def create_reksadana(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     #TODO bikin htmlnya
-    return render(request, "beli_reksadana.html")
+    # return render(request, "beli_reksadana.html")
 
 def get_all_reksadana(_):
     reksadana_list = Reksadana.objects.all().values()
@@ -134,7 +133,8 @@ def get_reksadana_history(request, id_reksadana):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 def edit_reksadana(request):
-    if request.method == "POST":
+    # if request.method == "POST":
+    try:
         data = json.loads(request.body)
         id_reksadana = data.get("id_reksadana")
 
@@ -149,7 +149,8 @@ def edit_reksadana(request):
         reksadana.penampung = penampung
         reksadana.save()
         return JsonResponse({'message':f'success on edit {reksadana.id}:{reksadana.name} category:{reksadana.category_id} kustodian:{reksadana.kustodian_id} penampung:{reksadana.penampung_id}'})
-    return JsonResponse({"error": "Invalid request method"}, status=405)
+    except:
+        return JsonResponse({"error": "Invalid request method"}, status=405)
 
 @csrf_exempt
 def delete_unit_dibeli_by_id(request):
