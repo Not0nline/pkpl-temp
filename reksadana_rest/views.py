@@ -133,6 +133,24 @@ def get_reksadana_history(request, id_reksadana):
         return JsonResponse(list(HistoryReksadana.objects.filter(id_reksadana=reksadana).values()), safe=False)
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
+def edit_reksadana(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        id_reksadana = data.get("id_reksadana")
+
+        category = CategoryReksadana.objects.get(id=data.get("category_id"))
+        kustodian = Bank.objects.get(id=data.get("kustodian_id"))
+        penampung = Bank.objects.get(id=data.get("penampung_id"))
+
+        reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
+        reksadana.name = data.get("name")
+        reksadana.category = category
+        reksadana.kustodian = kustodian
+        reksadana.penampung = penampung
+        reksadana.save()
+        return JsonResponse({'message':f'success on edit {reksadana.id}:{reksadana.name} category:{reksadana.category_id} kustodian:{reksadana.kustodian_id} penampung:{reksadana.penampung_id}'})
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
 @csrf_exempt
 def delete_unit_dibeli_by_id(request):
     if request.method == 'POST':
