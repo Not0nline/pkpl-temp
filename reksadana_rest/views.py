@@ -136,5 +136,11 @@ def get_reksadana_history(request, id_reksadana):
 @csrf_exempt
 def delete_unit_dibeli_by_id(request):
     if request.method == 'POST':
-        #TODO: Implement this
-        raise NotImplementedError
+        data = json.loads(request.body)
+        id_unitdibeli = data.get("id_unitdibeli")
+        unitdibeli = get_object_or_404(UnitDibeli, id=id_unitdibeli)
+
+        if request.user_id == unitdibeli.user_id:
+            unitdibeli.delete()
+            return JsonResponse({"message": "UnitDibeli deleted successfully"}, status=200)
+    return JsonResponse({"error": "Invalid JSON"}, status=400)
