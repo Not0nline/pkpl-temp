@@ -22,6 +22,7 @@ JWT_EXPIRATION_SECONDS = 3600  # 1 hour
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+BASE_BACKEND_URL = os.getenv('BASE_BACKEND_URL', 'http://localhost:8000/')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -48,7 +49,7 @@ INSTALLED_APPS = [
     'auth_page',
     'reksadana_rest',
     'portfolio',
-    'staff'
+    'staff',
 ]
 
 MIDDLEWARE = [
