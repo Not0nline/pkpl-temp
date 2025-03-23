@@ -30,42 +30,42 @@ def decode_value(encrypted_value):
 
 @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
-        try:
-            data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
 
-            # Extract required fields
-            name = data.get("name")
-            category_id = data.get("category_id")
-            kustodian_id = data.get("kustodian_id")
-            penampung_id = data.get("penampung_id")
-            nav = data.get("nav")
-            aum = data.get("aum")
-            tingkat_resiko = data.get("tingkat_resiko", "Konservatif")
+        # Extract required fields
+        name = data.get("name")
+        category_id = data.get("category_id")
+        kustodian_id = data.get("kustodian_id")
+        penampung_id = data.get("penampung_id")
+        nav = data.get("nav")
+        aum = data.get("aum")
+        tingkat_resiko = data.get("tingkat_resiko", "Konservatif")
 
-            # Validate foreign keys
-            category = CategoryReksadana.objects.get(id=category_id)
-            kustodian = Bank.objects.get(id=kustodian_id)
-            penampung = Bank.objects.get(id=penampung_id)
+        # Validate foreign keys
+        category = CategoryReksadana.objects.get(id=category_id)
+        kustodian = Bank.objects.get(id=kustodian_id)
+        penampung = Bank.objects.get(id=penampung_id)
 
-            # Create new Reksadana entry
-            reksadana = Reksadana.objects.create(
-                name=name,
-                category=category,
-                kustodian=kustodian,
-                penampung=penampung,
-                nav=nav,
-                aum=aum,
-                tingkat_resiko=tingkat_resiko
-            )
+        # Create new Reksadana entry
+        reksadana = Reksadana.objects.create(
+            name=name,
+            category=category,
+            kustodian=kustodian,
+            penampung=penampung,
+            nav=nav,
+            aum=aum,
+            tingkat_resiko=tingkat_resiko
+        )
 
-            return JsonResponse({"message": "Reksadana created successfully", "id": str(reksadana.id_reksadana)}, status=201)
+        return JsonResponse({"message": "Reksadana created successfully", "id": str(reksadana.id_reksadana)}, status=201)
 
-        except CategoryReksadana.DoesNotExist:
-            return JsonResponse({"error": "Invalid category ID"}, status=400)
-        except Bank.DoesNotExist:
-            return JsonResponse({"error": "Invalid bank ID"}, status=400)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+    except CategoryReksadana.DoesNotExist:
+        return JsonResponse({"error": "Invalid category ID"}, status=400)
+    except Bank.DoesNotExist:
+        return JsonResponse({"error": "Invalid bank ID"}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
     #TODO bikin htmlnya
     # return render(request, "beli_reksadana.html")
 
@@ -174,14 +174,35 @@ def edit_reksadana(request):
     except:
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
+# def delete_unit_dibeli_by_id(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         id_unitdibeli = data.get("id_unitdibeli")
+#         unitdibeli = get_object_or_404(UnitDibeli, id=id_unitdibeli)
+
+#         if request.user_id == unitdibeli.user_id:
+#             unitdibeli.delete()
+#             return JsonResponse({"message": "UnitDibeli deleted successfully"}, status=200)
+#     return JsonResponse({"error": "Invalid JSON"}, status=400)
+
 @csrf_exempt
 def delete_unit_dibeli_by_id(request):
-    if request.method == 'POST':
+    if request.method != 'POST':
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
         data = json.loads(request.body)
         id_unitdibeli = data.get("id_unitdibeli")
+        if not id_unitdibeli:
+            return JsonResponse({"error": "id_unitdibeli is required"}, status=400)
+
         unitdibeli = get_object_or_404(UnitDibeli, id=id_unitdibeli)
 
-        if request.user_id == unitdibeli.user_id:
-            unitdibeli.delete()
-            return JsonResponse({"message": "UnitDibeli deleted successfully"}, status=200)
-    return JsonResponse({"error": "Invalid JSON"}, status=400)
+        if str(request.user_id) != str(unitdibeli.user_id):
+            return JsonResponse({"error": "You are not authorized to delete this unit"}, status=403)
+
+        unitdibeli.delete()
+        return JsonResponse({"message": "UnitDibeli deleted successfully"}, status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
