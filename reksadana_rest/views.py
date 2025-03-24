@@ -142,9 +142,25 @@ def create_unit_dibeli(request):
 
 def get_units_by_user(request):
     if request.method == "GET":
-        user_id = request.user_id
+        # Debug information
+        print("\n===== GET_UNITS_BY_USER DEBUG =====")
+        print("Headers:", request.headers)
+        print("Session data:", dict(request.session.items()))
+        print("Request user_id attr:", getattr(request, 'user_id', 'Not set'))
+        print("Request META:", {k: v for k, v in request.META.items() if k.startswith('HTTP_')})
+        
+        # Get user_id from request or session
+        user_id = getattr(request, 'user_id', None) or request.session.get('user_id')
+        print("Resolved user_id:", user_id)
+        
+        if not user_id:
+            return JsonResponse({"error": "User not authenticated"}, status=401)
+            
+        # Get unit data
         units = UnitDibeli.objects.filter(user_id=user_id).values()
-        return JsonResponse(list(units), safe=False)
+        result = list(units)
+        print(f"Found {len(result)} units for user {user_id}")
+        return JsonResponse(result, safe=False)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
@@ -206,3 +222,70 @@ def delete_unit_dibeli_by_id(request):
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+def get_all_categories(request):
+    """
+    Get all Reksadana categories for dropdown selection
+    """
+    try:
+        categories = CategoryReksadana.objects.all()
+        return [{'id': category.id, 'name': category.name} for category in categories]
+    except Exception as e:
+        print(f"Error getting categories: {str(e)}")
+        return []
+
+def get_all_banks(request):
+    """
+    Get all Banks for dropdown selection
+    """
+    try:
+        banks = Bank.objects.all()
+        return [{'id': bank.id, 'name': bank.name} for bank in banks]
+    except Exception as e:
+        print(f"Error getting banks: {str(e)}")
+        return []
+
+def create_reksadana_api(request):
+    """
+    Create a new Reksadana from form data (not JSON)
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Extract form data
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        initial_value = request.POST.get('initial_value')
+        category_id = request.POST.get('category_id')
+        kustodian_id = request.POST.get('kustodian_id')
+        penampung_id = request.POST.get('penampung_id')
+        
+        # Validate form data
+        if not all([name, description, initial_value, category_id, kustodian_id, penampung_id]):
+            return JsonResponse({'error': 'All fields are required'}, status=400)
+        
+        # Validate foreign keys
+        try:
+            category = CategoryReksadana.objects.get(id=category_id)
+            kustodian = Bank.objects.get(id=kustodian_id)
+            penampung = Bank.objects.get(id=penampung_id)
+        except Exception as e:
+            return JsonResponse({'error': f'Invalid selection: {str(e)}'}, status=400)
+        
+        # Create new Reksadana entry
+        reksadana = Reksadana.objects.create(
+            name=name,
+            description=description,
+            nav=float(initial_value),
+            aum=0,  # Initial AUM is 0
+            tingkat_resiko="Konservatif",  # Default risk level
+            category=category,
+            kustodian=kustodian,
+            penampung=penampung
+        )
+        
+        return JsonResponse({'success': 'Reksadana created successfully', 'id': reksadana.id}, status=201)
+    
+    except Exception as e:
+        return JsonResponse({'error': f'Error creating Reksadana: {str(e)}'}, status=500)

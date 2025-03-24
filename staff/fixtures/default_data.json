@@ -1,0 +1,77 @@
+[
+    {
+        "model": "reksadana_rest.categoryreksadana",
+        "pk": 1,
+        "fields": {
+            "name": "Saham"
+        }
+    },
+    {
+        "model": "reksadana_rest.categoryreksadana",
+        "pk": 2,
+        "fields": {
+            "name": "Obligasi"
+        }
+    },
+    {
+        "model": "reksadana_rest.categoryreksadana",
+        "pk": 3,
+        "fields": {
+            "name": "Campuran"
+        }
+    },
+    {
+        "model": "reksadana_rest.bank",
+        "pk": 1,
+        "fields": {
+            "name": "Bank Kustodian A"
+        }
+    },
+    {
+        "model": "reksadana_rest.bank",
+        "pk": 2,
+        "fields": {
+            "name": "Bank Kustodian B"
+        }
+    },
+    {
+        "model": "reksadana_rest.bank",
+        "pk": 3,
+        "fields": {
+            "name": "Bank Penampung A"
+        }
+    },
+    {
+        "model": "reksadana_rest.bank",
+        "pk": 4,
+        "fields": {
+            "name": "Bank Penampung B"
+        }
+    },
+    {
+        "model": "reksadana_rest.reksadana",
+        "pk": 1,
+        "fields": {
+            "name": "Reksadana Saham Premium",
+            "category": 1,
+            "kustodian": 1,
+            "penampung": 3,
+            "nav": 120,
+            "aum": 5000,
+            "tingkat_resiko": "Agresif"
+        }
+    },
+    {
+        "model": "reksadana_rest.reksadana",
+        "pk": 2,
+        "fields": {
+            "name": "Reksadana Obligasi Stabil",
+            "category": 2,
+            "kustodian": 2,
+            "penampung": 4,
+            "nav": 95,
+            "aum": 3000,
+            "tingkat_resiko": "Konservatif"
+        }
+    }
+]

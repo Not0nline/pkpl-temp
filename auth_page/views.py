@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import os
 import requests
+import jwt
+from django.conf import settings
 
 API_BASE_URL = os.environ.get('API_BASE_URL')
 
@@ -9,13 +11,15 @@ def register_view(request):
     if request.method == 'POST':
         try:
             # Get data from form
+            nama = request.POST.get('nama')
             phone_number = request.POST.get('phone_number')
             country_code = request.POST.get('country_code')
-            card_number = request.POST.get('card_number').replace(' ', '')  # Remove spaces from card number
+            card_number = request.POST.get('card_number').replace(' ', '')  
             password = request.POST.get('password')
             
             # Prepare data for API
             payload = {
+                "nama": nama,
                 "phone_number": phone_number,
                 "country_code": country_code,
                 "card_number": card_number,
@@ -43,12 +47,9 @@ def register_view(request):
 def login_view(request):
     if request.method == 'POST':
         try:
-            # Get data from form
             country_code = request.POST.get('country_code')
             phone_number = request.POST.get('phone_number')
             password = request.POST.get('password')
-            
-            # Create full phone number
             full_phone = f"{country_code}{phone_number}"
             
             # Prepare data for API
@@ -64,9 +65,21 @@ def login_view(request):
             
             if response.status_code == 200:
                 data = response.json()
-                # Store JWT token in session
                 request.session['token'] = data.get('Authorization')
                 request.session['user_role'] = data.get('role')
+                request.session['phone_number'] = phone_number
+                request.session['country_code'] = country_code
+                try:
+                    token = data.get('Authorization').split(' ')[1]
+                    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
+                    request.session['user_id'] = payload.get('id')
+                    request.session['card_number'] = payload.get('card_number')
+                    request.session['nama']= payload.get('nama')
+                except Exception as e:
+                    print(f"Error decoding JWT: {e}")
+                
+                request.session.modified = True
+                
                 return redirect('home')
             else:
                 return render(request, 'login.html', {
@@ -84,18 +97,15 @@ def home_view(request):
         return redirect('login')
     
     return render(request, 'home.html', {
+        'nama': request.session.get('nama', 'Unknown'),
         'user_role': request.session.get('user_role', 'Unknown'),
         'phone_number': request.session.get('phone_number', 'Unknown'),
         'country_code': request.session.get('country_code', 'Unknown'),
         'card_number': request.session.get('card_number', 'Unknown')
-    })
+        })
 
 def logout_view(request):
-    # Clear session data
-    if 'token' in request.session:
-        del request.session['token']
-    if 'user_role' in request.session:
-        del request.session['user_role']
+    request.session.flush()
     
     # Redirect to login page
     return redirect('login')

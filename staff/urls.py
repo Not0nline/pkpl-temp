@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import create_uwu, edit_uwu
+from .views import create_reksadana, edit_reksadana, daftar_reksadana
 
 urlpatterns = [
-    path('create-uwu', create_uwu,name="create-reksadana"),
-    path('edit-uwu', edit_uwu,name="edit-reksadana"),
+    path('daftar_reksadana/', daftar_reksadana, name="daftar_reksadana"),
+    path('create_reksadana/', create_reksadana, name="create_reksadana"),
+    path('edit_reksadana/', edit_reksadana, name="edit_reksadana"),
 ]

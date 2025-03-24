@@ -35,13 +35,57 @@ def encode_value(value):
 # TODO: Not tested with postman
 def index(request):
     if request.method == 'GET':
-        data = json.loads(get_units_by_user(request).content)
-
-        #TODO: Blm bikin portfolio.html
-        # di tiap unit dalam daftarnya ada tombol jual aja, biar
-        # gk usah bikin file tampilin detail lagi 
-        # Jangan lupa buat simpen id unitdibeli supaya bisa sell
-        return render(request, 'portfolio.html', context={"units": data})
+        try:
+            # Debug information
+            # print("\n===== PORTFOLIO INDEX DEBUG =====")
+            # print("Session contents:", dict(request.session.items()))
+            # print("User ID in session:", request.session.get('user_id'))
+            # print("User ID as attr:", getattr(request, 'user_id', 'Not set'))
+            
+            # Ensure user_id is set on request if it's in the session
+            if not hasattr(request, 'user_id') and 'user_id' in request.session:
+                request.user_id = request.session['user_id']
+                # print(f"Manually set user_id on request: {request.user_id}")
+            
+            # Make sure Authorization header is set if token is in session
+            if 'token' in request.session and not request.META.get('HTTP_AUTHORIZATION'):
+                request.META['HTTP_AUTHORIZATION'] = request.session['token']
+                # print(f"Manually set Authorization header from session token")
+            
+            # Get portfolio data
+            response = get_units_by_user(request)
+            
+            # Check if the response is an error
+            if response.status_code != 200:
+                error_data = json.loads(response.content)
+                return render(request, 'portfolio.html', context={
+                    "error": error_data.get("error", "An error occurred"),
+                    "units": [],
+                    "user_name": request.session.get('nama', 'User')
+                })
+            
+            # Get success message from session if it exists
+            success_message = None
+            if 'success_message' in request.session:
+                success_message = request.session['success_message']
+                # Remove the message after using it to prevent it from persisting
+                del request.session['success_message']
+                request.session.modified = True
+                
+            data = json.loads(response.content)
+            return render(request, 'portfolio.html', context={
+                "units": data,
+                "success_message": success_message,
+                "user_name": request.session.get('nama', 'User')
+            })
+        except Exception as e:
+            print(f"Error in portfolio index: {str(e)}")
+            return render(request, 'portfolio.html', context={
+                "error": f"Error loading portfolio: {str(e)}",
+                "units": [],
+                "user_name": request.session.get('nama', 'User')
+            })
+            
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 # TODO: Not tested with postman

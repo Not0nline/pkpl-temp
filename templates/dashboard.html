@@ -4,23 +4,92 @@
 
 {% block content %}
 <div class="dashboard-container">
-    <h2>Reksadana Dashboard</h2>
+    <div class="welcome-section">
+        <h2>Welcome, {{ user_name }}</h2>
+        <p>Browse and invest in our available Reksadana options below.</p>
+    </div>
     
-    <div class="reksadana-list">
-        {% if reksadana %}
-            {% for item in reksadana %}
-                <div class="reksadana-card">
-                    <h3>{{ item.name }}</h3>
-                    <p><strong>Category:</strong> {{ item.category }}</p>
-                    <p><strong>NAV:</strong> {{ item.nav }}</p>
-                    <p><strong>AUM:</strong> {{ item.aum }}</p>
-                    <p><strong>Risk Level:</strong> {{ item.tingkat_resiko }}</p>
-                    <a href="{% url 'beli_unit' item.id_reksadana %}" class="btn btn-primary">Buy Units</a>
+    {% if success_message %}
+    <div class="alert alert-success">
+        {{ success_message }}
+    </div>
+    {% endif %}
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <div class="dashboard-header">
+        <h3>Available Reksadana Products</h3>
+    </div>
+    
+    <div class="reksadana-list row">
+        {% if reksadanas %}
+            {% for item in reksadanas %}
+                <div class="col-md-4 mb-4">
+                    <div class="card reksadana-card">
+                        <div class="card-header">
+                            <h4>{{ item.name }}</h4>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Category:</strong> {{ item.category.name }}</p>
+                            <p><strong>NAV:</strong> Rp {{ item.nav|floatformat:2 }}</p>
+                            <p><strong>AUM:</strong> Rp {{ item.aum|floatformat:2 }}</p>
+                            <p><strong>Risk Level:</strong> {{ item.tingkat_resiko }}</p>
+                            <p><strong>Description:</strong> {{ item.description|truncatewords:15 }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <form method="POST" action="{% url 'beli_unit' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="id_reksadana" value="{{ item.id_reksadana }}">
+                                <div class="form-group mb-2">
+                                    <label for="nominal">Investment Amount (Rp):</label>
+                                    <input type="number" class="form-control" name="nominal" id="nominal" min="10000" placeholder="Min. Rp 10,000" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Buy Units</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             {% endfor %}
         {% else %}
-            <p>No reksadana available at the moment.</p>
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No reksadana available at the moment. Please check back later.
+                </div>
+            </div>
         {% endif %}
     </div>
 </div>
+
+<style>
+.dashboard-container {
+    padding: 20px;
+}
+.welcome-section {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+.dashboard-header {
+    margin: 20px 0;
+}
+.reksadana-card {
+    height: 100%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+.reksadana-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.card-header {
+    background-color: #f8f9fa;
+}
+.card-footer {
+    background-color: #f8f9fa;
+}
+</style>
 {% endblock %}

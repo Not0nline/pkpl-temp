@@ -6,6 +6,18 @@
 <div class="portfolio-container">
     <h2>My Investment Portfolio</h2>
     
+    {% if success_message %}
+        <div class="alert alert-success">
+            {{ success_message }}
+        </div>
+    {% endif %}
+    
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+    
     {% if units %}
         <div class="portfolio-list">
             {% for unit in units %}
