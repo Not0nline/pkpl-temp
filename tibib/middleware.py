@@ -1,7 +1,6 @@
 import jwt
 from django.conf import settings
 from django.http import JsonResponse
-from django.urls import resolve, Resolver404
 from django.shortcuts import redirect
 
 class JWTAuthenticationMiddleware:
@@ -19,17 +18,15 @@ class JWTAuthenticationMiddleware:
             '/admin/',
             '/favicon.ico',
         ]
-        print("halo")
 
         current_path = request.path
         if any(current_path.startswith(path) for path in exempt_paths):
             return self.get_response(request)
 
         auth_header = request.headers.get("Authorization")
-        print("zczc",auth_header)
 
         token = None
-        
+
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
             try:
@@ -38,9 +35,6 @@ class JWTAuthenticationMiddleware:
                 request.user_id = payload.get("id")
                 request.user_username = payload.get('full_phone')
                 request.user_role = payload.get('role')
-                
-                print(f"Setting user_id on request: {request.user_id}")
-                print("Decoded payload:", payload)
                 
             except jwt.ExpiredSignatureError:
                 if request.path.startswith('/api/'):
