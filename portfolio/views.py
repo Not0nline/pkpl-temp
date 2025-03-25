@@ -95,11 +95,11 @@ def jual_unitdibeli(request):
         return JsonResponse({"error": "Unauthorized"}, status=401)
     if request.method=='POST':
         #Process jual
-        data = json.loads(request.body)
+        data = request.POST
         id_unitdibeli = data.get("id_unitdibeli")
 
         base_url = settings.BASE_BACKEND_URL  # Example: "http://127.0.0.1:8000"
-        jwt = request.headers.get("Authorization")
+        jwt = request.COOKIES.get("jwt_token")
         headers = {
             "Authorization": jwt,  # Add JWT Token here
             "Content-Type": "application/json"

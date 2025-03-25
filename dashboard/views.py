@@ -31,7 +31,7 @@ def encode_value(value):
 
 
 # Create your views here.
-def index(request):
+def dashboard(request):
     # Check authentication using both request attributes and session
     user_id = getattr(request, 'user_id', None) or request.session.get('user_id')
     if not user_id:
@@ -40,24 +40,25 @@ def index(request):
     try:
         # Get all reksadana data
         response = get_all_reksadana(request)
+        print("zczc",response)
         if response.status_code != 200:
             return render(request, "dashboard.html", {
                 "error": "Failed to load reksadana data",
-                "user_name": request.session.get('nama', 'User')
+                "user_name": request.user_username
             })
             
         # Parse response and render dashboard
         data = json.loads(response.content)
-        reksadanas = data.get('reksadana', [])
+        reksadanas = data.get('reksadanas', [])
         
         return render(request, "dashboard.html", {
             "reksadanas": reksadanas,
-            "user_name": request.session.get('nama', 'User')
+            "user_name": request.user_username
         })
     except Exception as e:
         return render(request, "dashboard.html", {
             "error": f"An error occurred: {str(e)}",
-            "user_name": request.session.get('nama', 'User')
+            "user_name": request.user_username
         })
 
 @csrf_exempt

@@ -38,6 +38,8 @@ def create_reksadana(request):
         kustodian_id = request.POST.get('kustodian_id')
         penampung_id = request.POST.get('penampung_id')
         risk_level = request.POST.get('tingkat_resiko')
+
+        print(name, initial_value, category_id, kustodian_id, penampung_id, risk_level)
         
         # Validate form data
         if not all([name, initial_value, category_id, kustodian_id, penampung_id, risk_level]):

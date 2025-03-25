@@ -54,6 +54,7 @@ class JWTAuthenticationMiddleware:
         elif auth_cookie:
             token = auth_cookie
             token = auth_cookie.split(" ")[1]
+            print("jwt cookie", token)
             try:
                 payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
                 request.user_id = payload["id"]  # Attach user ID to request
