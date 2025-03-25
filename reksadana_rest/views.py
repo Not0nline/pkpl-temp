@@ -33,7 +33,7 @@ def create_reksadana(request):
     try:
         # Extract form data
         name = request.POST.get('name')
-        initial_value = request.POST.get('initial_value')
+        initial_value = request.POST.get('nav')
         category_id = request.POST.get('category_id')
         kustodian_id = request.POST.get('kustodian_id')
         penampung_id = request.POST.get('penampung_id')
@@ -103,15 +103,18 @@ def edit_reksadana(request):
         reksadana.penampung = penampung
         reksadana.tingkat_resiko = risk_level
         reksadana.save()
-        return JsonResponse({'message':f'success on edit {reksadana.id_reksadana}:{reksadana.name} category:{reksadana.category.name} kustodian:{reksadana.kustodian.name} penampung:{reksadana.penampung.name}'})
+        return JsonResponse({'message':f'success on edit {reksadana.id_reksadana}:{reksadana.name} category:{reksadana.category.name} kustodian:{reksadana.kustodian.name} penampung:{reksadana.penampung.name}'}, status=201)
     except Exception as e:
         return JsonResponse({"error": f"Failed to edit reksadana : {str(e)} "}, status=405)
     
 
+def fetch_all_reksadanas():
+    return Reksadana.objects.all()
+
 def get_all_reksadana(request):
     if request.method == "GET":
         reksadana_list = Reksadana.objects.all().values()
-        return JsonResponse({"reksadana": list(reksadana_list)}, status=200)
+        return JsonResponse({"reksadanas": list(reksadana_list)}, status=200)
 
 @csrf_exempt
 def create_payment(request):

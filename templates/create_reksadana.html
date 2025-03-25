@@ -42,16 +42,18 @@
                 {% endfor %}
             </select>
         </div>
-        
+
         <div class="form-group">
             <label for="nav">NAV:</label>
             <input type="number" id="nav" name="nav" class="form-control" required step="0.01">
         </div>
         
+        {% comment %}         
         <div class="form-group">
             <label for="aum">AUM:</label>
             <input type="number" id="aum" name="aum" class="form-control" required>
-        </div>
+        </div> 
+        {% endcomment %}
         
         <div class="form-group">
             <label for="tingkat_resiko">Risk Level:</label>

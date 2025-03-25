@@ -2,7 +2,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from reksadana_rest.models import Reksadana
-from reksadana_rest.views import create_reksadana, edit_reksadana, get_all_reksadana, get_all_categories, get_all_banks
+from reksadana_rest.views import create_reksadana, edit_reksadana, get_all_reksadana, get_all_categories, get_all_banks, fetch_all_reksadanas
 import requests
 import json
 
@@ -10,7 +10,7 @@ import json
 API_BASE_URL = "http://localhost:8001"
 
 def show_dashboard(request):
-    auth_header = request.headers.get('Authorization')
+    auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
     
@@ -20,14 +20,18 @@ def show_dashboard(request):
             )
 
     if response.status_code == 200:
-        return render(request, "dashboard_admin.html",context=get_all_reksadana(request).content)
+        reksadanas = fetch_all_reksadanas()
+        context = {
+            "reksadanas": reksadanas,
+        }
+        return render(request, "dashboard_admin.html",context)
     else:
         return render("error_page.html", 
                       {'message':'Unauthorized or forbidden access'})
     
 @csrf_exempt
 def create_uwu(request):
-    auth_header = request.headers.get('Authorization')
+    auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
     
@@ -42,7 +46,7 @@ def create_uwu(request):
             if response.status_code == 200:
                 create_response = create_reksadana(request)
                 if create_response.status_code == 201:
-                    return redirect('/staff/daftar_reksadana/')
+                    return redirect('/staff/dashboard/')
                 else:
                     # TODO
                     error_data = json.loads(create_response.content)
@@ -81,7 +85,7 @@ def create_uwu(request):
     
 
 def edit_uwu(request):
-    auth_header = request.headers.get('Authorization')
+    auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
     
@@ -96,14 +100,18 @@ def edit_uwu(request):
             if response.status_code == 200:
                 edit_response = edit_reksadana(request)
                 if edit_response.status_code == 201:
-                    return redirect('/staff/daftar_reksadana/')
+                    return redirect('/staff/dashboard/')
                 else:
                     # TODO
+                    reksadana = Reksadana.objects.get(id_reksadana=request.POST.get('reksadana_id'))
+                    categories = get_all_categories(request)
+                    banks = get_all_banks(request)
                     error_data = json.loads(edit_response.content)
-                    return render(request, 'create_reksadana.html', {
-                        'error': error_data.get('error', 'Failed to create reksadana'),
-                        'categories': get_all_categories(request),
-                        'banks': get_all_banks(request)
+                    return render(request, 'edit_reksadana.html', {
+                        'error': error_data.get('error', 'Failed to edit reksadana'),
+                        'categories': categories,
+                        'banks': banks,
+                        'reksadana':reksadana
                     })
             else:
                 # TODO

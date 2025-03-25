@@ -10,7 +10,7 @@
         {% csrf_token %}
         
         <!-- Hidden field to store the ID -->
-        <input type="hidden" name="reksadana_id" value="{{ reksadana.id }}">
+        <input type="hidden" id="reksadana_id" name="reksadana_id" value="{{ reksadana.id_reksadana }}">
 
         <div class="form-group">
             <label for="name">Reksadana Name:</label>
@@ -56,18 +56,6 @@
                 {% endfor %}
             </select>
         </div>
-
-        <div class="form-group">
-    <label for="nav">NAV:</label>
-    <input type="number" id="nav" name="nav" class="form-control" step="0.01"
-           value="{{ reksadana.nav }}" readonly>
-</div>
-
-<div class="form-group">
-    <label for="aum">AUM:</label>
-    <input type="number" id="aum" name="aum" class="form-control"
-           value="{{ reksadana.aum }}" readonly>
-</div>
 
         <div class="form-group">
             <label for="tingkat_resiko">Risk Level:</label>

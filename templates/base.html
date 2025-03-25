@@ -16,8 +16,9 @@
                     {% if is_authenticated %}
                         <li><a href="{% url 'home' %}">Home</a></li>
                         {% if user_role == 'staff' %}
-                        <li><a href="{% url 'create-reksadana' %}">Create Reksadana</a></li>
-                        <li><a href="{% url 'edit-reksadana' %}">Edit Reksadana</a></li>
+                        <li><a href="{% url 'dashboard_admin' %}">Dashboard Admin</a></li>
+                        <li><a href="{% url 'create_reksadana' %}">Create Reksadana</a></li>
+                        <li><a href="{% url 'edit_reksadana' %}">Edit Reksadana</a></li>
                         {% endif %}
                         <li><a href="{% url 'index' %}">Portfolio</a></li>
                         <li><a href="{% url 'logout' %}">Logout</a></li>

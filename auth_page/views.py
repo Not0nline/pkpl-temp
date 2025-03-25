@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import BlacklistedToken
 import os
 import requests
 import jwt
