@@ -1,9 +1,10 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from .models import BlacklistedToken
 import os
 import requests
 import jwt
-from django.conf import settings
 
 API_BASE_URL = os.environ.get('API_BASE_URL')
 
@@ -63,24 +64,18 @@ def login_view(request):
                                     json=payload, 
                                     headers={'Content-Type': 'application/json'})
             
+            data = response.json()  # Convert response to dictionary
+            token = data.get("Authorization")  # Get the token
             if response.status_code == 200:
-                data = response.json()
-                request.session['token'] = data.get('Authorization')
-                request.session['user_role'] = data.get('role')
-                request.session['phone_number'] = phone_number
-                request.session['country_code'] = country_code
-                try:
-                    token = data.get('Authorization').split(' ')[1]
-                    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
-                    request.session['user_id'] = payload.get('id')
-                    request.session['card_number'] = payload.get('card_number')
-                    request.session['nama']= payload.get('nama')
-                except Exception as e:
-                    print(f"Error decoding JWT: {e}")
-                
-                request.session.modified = True
-                
-                return redirect('home')
+                response = redirect('home')
+                response.set_cookie(
+                    key="jwt_token",
+                    value=token,
+                    httponly=True,  # Prevents JavaScript access (more secure)
+                    samesite="Lax",  # Prevents CSRF (change to "Strict" if necessary)
+                    secure=False  
+                )
+                return response
             else:
                 return render(request, 'login.html', {
                     'error': 'Login failed. Please check your credentials.'
@@ -93,19 +88,12 @@ def login_view(request):
     return render(request, 'login.html')
 
 def home_view(request):
-    if 'token' not in request.session:
-        return redirect('login')
-    
     return render(request, 'home.html', {
-        'nama': request.session.get('nama', 'Unknown'),
-        'user_role': request.session.get('user_role', 'Unknown'),
-        'phone_number': request.session.get('phone_number', 'Unknown'),
-        'country_code': request.session.get('country_code', 'Unknown'),
-        'card_number': request.session.get('card_number', 'Unknown')
-        })
+        'user_role': request.user_role,
+        'phone_number': request.user_username,
+    })
 
 def logout_view(request):
-    request.session.flush()
-    
-    # Redirect to login page
-    return redirect('login')
+    response = JsonResponse({"message": "Logged out successfully"})
+    response.delete_cookie("jwt_token")  # Remove the JWT cookie
+    return response
