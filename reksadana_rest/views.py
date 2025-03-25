@@ -75,43 +75,6 @@ def get_all_reksadana(request):
         return JsonResponse({"reksadana": list(reksadana_list)}, status=200)
 
 @csrf_exempt
-def create_payment(request):
-    if request.method == "POST":
-        try:
-            user_id = request.user_id
-            data = json.loads(request.body)
-            id_reksadana = data.get("id_reksadana")
-            nominal = decode_value(data.get("nominal"))
-
-            if not user_id or not id_reksadana or not nominal:
-                return JsonResponse({"error": "Missing required fields"}, status=400)
-
-            # Ensure Reksadana exists
-            reksadana = get_object_or_404(Reksadana, id_reksadana=id_reksadana)
-
-            payment = Payment.objects.create(
-                user_id=user_id,
-                id_reksadana=reksadana,
-                nominal=nominal,
-                waktu_pembelian = datetime.datetime.now()
-            )
-
-            return JsonResponse({"message": "Payment created", "payment_id": payment.id}, status=201)
-
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
-
-    return JsonResponse({"error": "Invalid request method"}, status=405)
-
-def get_payments_by_user(request):
-    if request.method == "GET":
-        user_id = request.user_id
-        payments = Payment.objects.filter(user_id=user_id).values()
-        return JsonResponse(list(payments), safe=False)
-
-    return JsonResponse({"error": "Invalid request method"}, status=405)
-
-@csrf_exempt
 def create_unit_dibeli(request):
     if request.method == "POST":
         try:

@@ -75,8 +75,7 @@ class JWTBlacklistMiddleware:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
-            if BlacklistedToken.objects.filter(token=token).exists():
-                return JsonResponse({"error": "Token is blacklisted"}, status=401)
+
 
             try:
                 jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])

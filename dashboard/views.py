@@ -2,12 +2,12 @@ import json
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
-import requests
+
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from reksadana_rest.views import get_all_reksadana, create_unit_dibeli, create_payment
+from reksadana_rest.views import get_all_reksadana, create_unit_dibeli
 import os
 import base64
 
@@ -62,8 +62,8 @@ def index(request):
 
 @csrf_exempt
 def beli_unit(request):
-    # Check authentication using both request attributes and session
-    user_id = request.session.get('user_id')
+    # Check authentication using both request attributes
+    user_id = request.user_id
     if not user_id:
         return redirect('login')
         
@@ -79,6 +79,7 @@ def beli_unit(request):
                 # Handle form data (HTML form)
                 reksadana_id = request.POST.get("id_reksadana")
                 nominal = request.POST.get("nominal")
+
             # Validate required fields
             if not reksadana_id or not nominal:
                 return render(request, "error.html", {
@@ -98,15 +99,6 @@ def beli_unit(request):
                     "error": "Invalid amount format",
                     "back_url": "/"
                 })
-            
-            # Store data in session for process_payment
-            request.session['transaction_data'] = {
-                'user_id': request.session.get('user_id'),
-                'id_reksadana': reksadana_id,
-                'nominal': nominal,
-                'user_id': user_id
-            }
-            print("Session Data:", request.session.__dict__)
             
             # Process payment
             return render(request, "payment_confirmation.html", {
@@ -128,6 +120,9 @@ def beli_unit(request):
 def process_payment(request):
     if request.method == 'POST':
         try:
+            if not request.user_id:
+                return JsonResponse({"error": "Unauthorized"}, status=401)
+
             if request.content_type == 'application/json':
                 data = json.loads(request.body)
             else:
@@ -140,17 +135,11 @@ def process_payment(request):
 
             if not data.get('id_reksadana') or not data.get('nominal'):
                 return JsonResponse({"error": "Missing required fields"}, status=400)
-            request.user_id = data.get('user_id')
-            
-            # Print detailed debug info about the nominal value
-            print("Raw nominal value:", data.get('nominal'))
-            print("Nominal type:", type(data.get('nominal')))
             
             try:
                 # Try to handle various formats including commas and currency symbols
                 nominal_str = str(data.get('nominal')).replace('Rp', '').replace(',', '').replace('.', '').strip()
                 nominal_int = int(nominal_str)
-                print("Converted nominal value:", nominal_int)
             except ValueError as e:
                 print(f"Value error when converting nominal: {e}")
                 return render(request, "error.html", {
@@ -163,22 +152,6 @@ def process_payment(request):
                 'id_reksadana': data.get('id_reksadana'),
                 'nominal': encode_value(nominal_int),
             }).encode('utf-8')
-
-            print("Session Data:", request.session.__dict__)
-            print("Processing payment for user_id:", request.user_id)
-            print("Request body:", request._body.decode('utf-8'))
-            print("Nominal type:", type(nominal_int), "Value:", nominal_int)
-            
-            print("CCC")
-            # Create payment
-            res = create_payment(request)
-            if res.status_code != 201:
-                error_data = json.loads(res.content.decode('utf-8'))
-                return render(request, "error.html", {
-                    "error": f"Payment failed: {error_data.get('error', 'Unknown error')}",
-                    "back_url": "/"
-                })
-            print("BBBB")
 
             # Create unit dibeli
             res = create_unit_dibeli(request)

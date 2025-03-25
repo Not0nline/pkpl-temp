@@ -134,17 +134,3 @@ class UnitDibeli(models.Model):
         if self.nominal<0:
             raise ValueError("Ini apaan uang <0 :V")
         
-class Payment(models.Model):
-    #TODO: BELUM DI HASH
-    user_id = models.UUIDField()
-    id_reksadana = models.ForeignKey(to="Reksadana", 
-                                     on_delete=models.CASCADE,
-                                     to_field="id_reksadana"  
-                                     )
-    nominal = models.IntegerField()
-    waktu_pembelian = models.DateTimeField()
-
-    def clean(self):
-        super().clean()
-        if self.nominal<0:
-            raise ValueError("Ini apaan uang <0 :V")

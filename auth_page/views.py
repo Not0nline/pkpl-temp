@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import BlacklistedToken
 import os
 import requests
 import jwt
@@ -94,6 +93,6 @@ def home_view(request):
     })
 
 def logout_view(request):
-    response = JsonResponse({"message": "Logged out successfully"})
+    response = redirect('login')
     response.delete_cookie("jwt_token")  # Remove the JWT cookie
     return response
