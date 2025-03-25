@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Tibib{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="welcome-section">
+        <h2>Welcome, {{ admin_name }}</h2>
+        <p>Manage all Reksadana products below.</p>
+    </div>
+
+    {% if success_message %}
+    <div class="alert alert-success">
+        {{ success_message }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Button to Create a New Reksadana -->
+    <div class="mb-3">
+        <a href="{% url 'create_reksadana' %}" class="btn btn-primary">
+            Create Reksadana
+        </a>
+    </div>
+
+    <div class="dashboard-header">
+        <h3>Reksadana Products (Admin View)</h3>
+    </div>
+
+    <div class="reksadana-list row">
+        {% if reksadanas %}
+            {% for item in reksadanas %}
+                <div class="col-md-4 mb-4">
+                    <div class="card reksadana-card">
+                        <div class="card-header">
+                            <h4>{{ item.name }}</h4>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Category:</strong> {{ item.category.name }}</p>
+                            <p><strong>NAV:</strong> Rp {{ item.nav|floatformat:2 }}</p>
+                            <p><strong>AUM:</strong> Rp {{ item.aum|floatformat:2 }}</p>
+                            <p><strong>Risk Level:</strong> {{ item.tingkat_resiko }}</p>
+                            <p><strong>Description:</strong> {{ item.description|truncatewords:15 }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'edit_reksadana' %}?reksadana_id={{ item.id_reksadana }}"
+                               class="btn btn-secondary btn-block">
+                                Edit Reksadana
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No reksadana found. Please create a new product.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    padding: 20px;
+}
+.welcome-section {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+.dashboard-header {
+    margin: 20px 0;
+}
+.reksadana-card {
+    height: 100%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+.reksadana-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.card-header {
+    background-color: #f8f9fa;
+}
+.card-footer {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

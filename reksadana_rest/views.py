@@ -31,43 +31,82 @@ def decode_value(encrypted_value):
 @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
     try:
-        data = json.loads(request.body)
-
-        # Extract required fields
-        name = data.get("name")
-        category_id = data.get("category_id")
-        kustodian_id = data.get("kustodian_id")
-        penampung_id = data.get("penampung_id")
-        nav = data.get("nav")
-        aum = data.get("aum")
-        tingkat_resiko = data.get("tingkat_resiko", "Konservatif")
-
+        # Extract form data
+        name = request.POST.get('name')
+        initial_value = request.POST.get('initial_value')
+        category_id = request.POST.get('category_id')
+        kustodian_id = request.POST.get('kustodian_id')
+        penampung_id = request.POST.get('penampung_id')
+        risk_level = request.POST.get('tingkat_resiko')
+        
+        # Validate form data
+        if not all([name, initial_value, category_id, kustodian_id, penampung_id, risk_level]):
+            return JsonResponse({'error': 'All fields are required'}, status=400)
+        
         # Validate foreign keys
-        category = CategoryReksadana.objects.get(id=category_id)
-        kustodian = Bank.objects.get(id=kustodian_id)
-        penampung = Bank.objects.get(id=penampung_id)
+        try:
+            category = CategoryReksadana.objects.get(id=category_id)
+            kustodian = Bank.objects.get(id=kustodian_id)
+            penampung = Bank.objects.get(id=penampung_id)
+        except Exception as e:
+            return JsonResponse({'error': f'Invalid selection: {str(e)}'}, status=400)
+        except CategoryReksadana.DoesNotExist:
+            return JsonResponse({"error": "Invalid category ID"}, status=400)
+        except Bank.DoesNotExist:
+            return JsonResponse({"error": "Invalid bank ID"}, status=400)
 
         # Create new Reksadana entry
         reksadana = Reksadana.objects.create(
             name=name,
+            nav=float(initial_value),
+            aum=0,
+            tingkat_resiko=risk_level,
             category=category,
             kustodian=kustodian,
-            penampung=penampung,
-            nav=nav,
-            aum=aum,
-            tingkat_resiko=tingkat_resiko
+            penampung=penampung
         )
-
         return JsonResponse({"message": "Reksadana created successfully", "id": str(reksadana.id_reksadana)}, status=201)
-
-    except CategoryReksadana.DoesNotExist:
-        return JsonResponse({"error": "Invalid category ID"}, status=400)
-    except Bank.DoesNotExist:
-        return JsonResponse({"error": "Invalid bank ID"}, status=400)
+    
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-    #TODO bikin htmlnya
-    # return render(request, "beli_reksadana.html")
+        return JsonResponse({"error": f"Failed to create reksadana : {str(e)}"}, status=500)
+    
+def edit_reksadana(request):
+    try:
+        # Extract form data
+        id_reksadana = request.POST.get('reksadana_id')
+        name = request.POST.get('name')
+        category_id = request.POST.get('category_id')
+        kustodian_id = request.POST.get('kustodian_id')
+        penampung_id = request.POST.get('penampung_id')
+        risk_level = request.POST.get('tingkat_resiko')
+        
+        # Validate form data
+        if not all([id_reksadana, name, category_id, kustodian_id, penampung_id, risk_level]):
+            return JsonResponse({'error': 'All fields are required'}, status=400)
+
+        # Validate foreign keys
+        try:
+            category = CategoryReksadana.objects.get(id=category_id)
+            kustodian = Bank.objects.get(id=kustodian_id)
+            penampung = Bank.objects.get(id=penampung_id)
+        except Exception as e:
+            return JsonResponse({'error': f'Invalid selection: {str(e)}'}, status=400)
+        except CategoryReksadana.DoesNotExist:
+            return JsonResponse({"error": "Invalid category ID"}, status=400)
+        except Bank.DoesNotExist:
+            return JsonResponse({"error": "Invalid bank ID"}, status=400)
+        
+        reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
+        reksadana.name = name
+        reksadana.category = category
+        reksadana.kustodian = kustodian
+        reksadana.penampung = penampung
+        reksadana.tingkat_resiko = risk_level
+        reksadana.save()
+        return JsonResponse({'message':f'success on edit {reksadana.id_reksadana}:{reksadana.name} category:{reksadana.category.name} kustodian:{reksadana.kustodian.name} penampung:{reksadana.penampung.name}'})
+    except Exception as e:
+        return JsonResponse({"error": f"Failed to edit reksadana : {str(e)} "}, status=405)
+    
 
 def get_all_reksadana(request):
     if request.method == "GET":
@@ -171,24 +210,24 @@ def get_reksadana_history(request, id_reksadana):
         return JsonResponse(list(HistoryReksadana.objects.filter(id_reksadana=reksadana).values()), safe=False)
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-def edit_reksadana(request):
-    try:
-        data = json.loads(request.body)
-        id_reksadana = data.get("id_reksadana")
+# def edit_reksadana(request):
+#     try:
+#         data = json.loads(request.body)
+#         id_reksadana = data.get("id_reksadana")
 
-        category = CategoryReksadana.objects.get(id=data.get("category_id"))
-        kustodian = Bank.objects.get(id=data.get("kustodian_id"))
-        penampung = Bank.objects.get(id=data.get("penampung_id"))
+#         category = CategoryReksadana.objects.get(id=data.get("category_id"))
+#         kustodian = Bank.objects.get(id=data.get("kustodian_id"))
+#         penampung = Bank.objects.get(id=data.get("penampung_id"))
 
-        reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
-        reksadana.name = data.get("name")
-        reksadana.category = category
-        reksadana.kustodian = kustodian
-        reksadana.penampung = penampung
-        reksadana.save()
-        return JsonResponse({'message':f'success on edit {reksadana.id}:{reksadana.name} category:{reksadana.category_id} kustodian:{reksadana.kustodian_id} penampung:{reksadana.penampung_id}'})
-    except:
-        return JsonResponse({"error": "Invalid request method"}, status=405)
+#         reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
+#         reksadana.name = data.get("name")
+#         reksadana.category = category
+#         reksadana.kustodian = kustodian
+#         reksadana.penampung = penampung
+#         reksadana.save()
+#         return JsonResponse({'message':f'success on edit {reksadana.id}:{reksadana.name} category:{reksadana.category_id} kustodian:{reksadana.kustodian_id} penampung:{reksadana.penampung_id}'})
+#     except:
+#         return JsonResponse({"error": "Invalid request method"}, status=405)
 
 # def delete_unit_dibeli_by_id(request):
 #     if request.method == 'POST':
