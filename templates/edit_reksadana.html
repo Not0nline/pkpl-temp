@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Reksadana - Tibib{% endblock %}
+
+{% block content %}
+<div class="create-reksadana-container">
+    <h2>Edit Reksadana</h2>
+    
+    <form method="POST" action="{% url 'edit_reksadana' %}">
+        {% csrf_token %}
+        
+        <!-- Hidden field to store the ID -->
+        <input type="hidden" id="reksadana_id" name="reksadana_id" value="{{ reksadana.id_reksadana }}">
+
+        <div class="form-group">
+            <label for="name">Reksadana Name:</label>
+            <input type="text" id="name" name="name" class="form-control" 
+                   value="{{ reksadana.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="category_id">Category:</label>
+            <select id="category_id" name="category_id" class="form-control" required>
+                <option value="">Select Category</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" 
+                        {% if category.id == reksadana.category.id %} selected {% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="kustodian_id">Bank Kustodian:</label>
+            <select id="kustodian_id" name="kustodian_id" class="form-control" required>
+                <option value="">Select Bank</option>
+                {% for bank in banks %}
+                    <option value="{{ bank.id }}" 
+                        {% if bank.id == reksadana.kustodian_id %} selected {% endif %}>
+                        {{ bank.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="penampung_id">Bank Penampung:</label>
+            <select id="penampung_id" name="penampung_id" class="form-control" required>
+                <option value="">Select Bank</option>
+                {% for bank in banks %}
+                    <option value="{{ bank.id }}" 
+                        {% if bank.id == reksadana.penampung_id %} selected {% endif %}>
+                        {{ bank.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="tingkat_resiko">Risk Level:</label>
+            <select id="tingkat_resiko" name="tingkat_resiko" class="form-control">
+                <option value="Konservatif" 
+                    {% if reksadana.tingkat_resiko == "Konservatif" %} selected {% endif %}>
+                    Konservatif
+                </option>
+                <option value="Moderat" 
+                    {% if reksadana.tingkat_resiko == "Moderat" %} selected {% endif %}>
+                    Moderat
+                </option>
+                <option value="Agresif" 
+                    {% if reksadana.tingkat_resiko == "Agresif" %} selected {% endif %}>
+                    Agresif
+                </option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Reksadana</button>
+    </form>
+</div>
+{% endblock %}
