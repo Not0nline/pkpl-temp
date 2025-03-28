@@ -1,18 +1,10 @@
 import json
-
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import padding
-
-from django.contrib import messages
 import requests
-import httpx
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from reksadana_rest.views import get_units_by_user,delete_unit_dibeli_by_id
-from tibib.utils import *
 
 def index(request):
     if request.method == 'GET':
