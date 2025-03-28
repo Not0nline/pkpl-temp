@@ -5,7 +5,7 @@ from .models import *
 import json
 from tibib.utils import decrypt_and_verify
 
-@csrf_exempt  # Remove this if CSRF protection is handled properly
+# @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
     try:
         # Extract form data
@@ -58,7 +58,6 @@ def edit_reksadana(request):
         kustodian_id = request.POST.get('kustodian_id')
         penampung_id = request.POST.get('penampung_id')
         risk_level = request.POST.get('tingkat_resiko')
-        
         # Validate form data
         if not all([id_reksadana, name, category_id, kustodian_id, penampung_id, risk_level]):
             return JsonResponse({'error': 'All fields are required'}, status=400)
@@ -74,7 +73,6 @@ def edit_reksadana(request):
             return JsonResponse({"error": "Invalid category ID"}, status=400)
         except Bank.DoesNotExist:
             return JsonResponse({"error": "Invalid bank ID"}, status=400)
-        
         reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
         reksadana.name = name
         reksadana.category = category
@@ -95,7 +93,7 @@ def get_all_reksadana(request):
         reksadana_list = Reksadana.objects.all().values()
         return JsonResponse({"reksadanas": list(reksadana_list)}, status=200)
 
-@csrf_exempt
+# @csrf_exempt
 def create_unit_dibeli(request):
     if request.method == "POST":
         try:
@@ -165,7 +163,7 @@ def get_reksadana_history(request, id_reksadana):
     # except:
     #     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-@csrf_exempt
+# @csrf_exempt
 def delete_unit_dibeli_by_id(request):
     if request.method != 'POST':
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -177,7 +175,6 @@ def delete_unit_dibeli_by_id(request):
             return JsonResponse({"error": "id_unitdibeli is required"}, status=400)
 
         unitdibeli = get_object_or_404(UnitDibeli, id=id_unitdibeli)
-
         if str(request.user_id) != str(unitdibeli.user_id):
             return JsonResponse({"error": "You are not authorized to delete this unit"}, status=403)
 
@@ -253,3 +250,5 @@ def create_reksadana_api(request):
     
     except Exception as e:
         return JsonResponse({'error': f'Error creating Reksadana: {str(e)}'}, status=500)
+    
+    

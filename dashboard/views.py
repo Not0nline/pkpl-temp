@@ -10,14 +10,14 @@ from tibib.utils import encrypt_and_sign
 # Create your views here.
 def dashboard(request):
     # Check authentication using both request attributes and session
-    user_id = getattr(request, 'user_id', None) or request.session.get('user_id')
+    user_id = getattr(request, 'user_id', None) 
     if not user_id:
-        return redirect('login')
+        return redirect('auth_page:login')
         
     try:
         # Get all reksadana data
         response = get_all_reksadana(request)
-        print("zczc",response)
+        # print("zczc",response)
         if response.status_code != 200:
             return render(request, "dashboard.html", {
                 "error": "Failed to load reksadana data",
@@ -38,12 +38,12 @@ def dashboard(request):
             "user_name": request.user_username
         })
 
-@csrf_exempt
+# @csrf_exempt
 def beli_unit(request):
     # Check authentication using both request attributes
     user_id = request.user_id
     if not user_id:
-        return redirect('login')
+        return redirect('auth_page:login')
         
     if request.method == 'POST':
         try:
@@ -91,10 +91,10 @@ def beli_unit(request):
             })
     
     # GET request - redirect to dashboard
-    return redirect('index')
+    return redirect('auth_page:index')
 
 # async function call
-@csrf_exempt
+# @csrf_exempt
 def process_payment(request):
     if request.method == 'POST':
         try:
@@ -147,7 +147,7 @@ def process_payment(request):
             request.session['success_message'] = "Your investment has been processed successfully!"
             
             # Redirect to portfolio page instead of dashboard
-            return redirect('/portfolio/')
+            return redirect('portfolio:index')
             
         except Exception as e:
             print(f"Exception in process_payment: {str(e)}")

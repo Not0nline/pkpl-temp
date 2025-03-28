@@ -26,7 +26,7 @@ class JWTAuthenticationMiddleware:
         auth_header = request.headers.get("Authorization")
         auth_cookie = request.COOKIES.get("jwt_token")
 
-        if auth_header and not auth_header:
+        if not auth_cookie and not auth_header:
             return JsonResponse({"error": "Authorization header missing"}, status=401)
 
         # dari postman
@@ -45,7 +45,7 @@ class JWTAuthenticationMiddleware:
                     return JsonResponse({"error": "Token has expired"}, status=401)
                 else:
                     # For non-API routes, redirect to login
-                    return redirect('login')
+                    return redirect('auth_page:login')
                 
             except jwt.InvalidTokenError as e:
                 print("JWT Error:", str(e))

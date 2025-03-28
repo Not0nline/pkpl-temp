@@ -13,19 +13,19 @@
             <div class="container">
                 <h1>Tibib</h1>
                 <ul>
-                    {% if is_authenticated %}
-                        <li><a href="{% url 'home' %}">Profile</a></li>
+                    {% if user_role != None %}
+                        <li><a href="{% url 'auth_page:home' %}">Profile</a></li>
                         {% if user_role == 'staff' %}
-                        <li><a href="{% url 'dashboard_admin' %}">Dashboard Admin</a></li>
-                        <li><a href="{% url 'create_reksadana' %}">Create Reksadana</a></li>
-                        <li><a href="{% url 'edit_reksadana' %}">Edit Reksadana</a></li>
+                        <li><a href="{% url 'staff:dashboard_admin' %}">Dashboard Admin</a></li>
+                        <li><a href="{% url 'staff:create_reksadana' %}">Create Reksadana</a></li>
+                        {% elif user_role == 'user' %}
+                        <li><a href="{% url 'portfolio:index' %}">Portfolio</a></li>
+                        <li><a href="{% url 'dashboard:dashboard' %}">Dashboard</a></li>
                         {% endif %}
-                        <li><a href="{% url 'index' %}">Portfolio</a></li>
-                        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                        <li><a href="{% url 'logout' %}">Logout</a></li>
+                        <li><a href="{% url 'auth_page:logout' %}">Logout</a></li>
                     {% else %}
-                        <li><a href="{% url 'login' %}">Login</a></li>
-                        <li><a href="{% url 'register' %}">Register</a></li>
+                        <li><a href="{% url 'auth_page:login' %}">Login</a></li>
+                        <li><a href="{% url 'auth_page:register' %}">Register</a></li>
                     {% endif %}
                 </ul>
             </div>

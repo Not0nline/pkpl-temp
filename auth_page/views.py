@@ -11,7 +11,6 @@ def register_view(request):
     if request.method == 'POST':
         try:
             # Get data from form
-            nama = request.POST.get('nama')
             phone_number = request.POST.get('phone_number')
             country_code = request.POST.get('country_code')
             card_number = request.POST.get('card_number').replace(' ', '')  
@@ -19,7 +18,6 @@ def register_view(request):
             
             # Prepare data for API
             payload = {
-                "nama": nama,
                 "phone_number": phone_number,
                 "country_code": country_code,
                 "card_number": card_number,
@@ -32,7 +30,7 @@ def register_view(request):
                                      headers={'Content-Type': 'application/json'})
             
             if response.status_code == 200:
-                return redirect('login')
+                return redirect('auth_page:login')
             else:
                 return render(request, 'register.html', {
                     'error': 'Registration failed. Please try again.'
@@ -66,7 +64,7 @@ def login_view(request):
             data = response.json()  # Convert response to dictionary
             token = data.get("Authorization")  # Get the token
             if response.status_code == 200:
-                response = redirect('home')
+                response = redirect('auth_page:home')
                 response.set_cookie(
                     key="jwt_token",
                     value=token,
@@ -87,12 +85,17 @@ def login_view(request):
     return render(request, 'login.html')
 
 def home_view(request):
+    # Get user attributes if they exist, otherwise use None as fallback
+    user_role = getattr(request, 'user_role', None)
+    phone_number = getattr(request, 'user_username', None)
+    
     return render(request, 'home.html', {
-        'user_role': request.user_role,
-        'phone_number': request.user_username,
+        'user_role': user_role,
+        'phone_number': phone_number,
     })
 
 def logout_view(request):
-    response = redirect('login')
-    response.delete_cookie("jwt_token")  # Remove the JWT cookie
+    response = redirect('auth_page:login')
+    response.flush()
+    # response.delete_cookie("jwt_token")
     return response
