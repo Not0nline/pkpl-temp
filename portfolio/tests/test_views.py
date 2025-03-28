@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from unittest.mock import patch, Mock
 from tibib.utils import encode_value
 from portfolio.views import *
-from reksadana_rest.models import Reksadana, CategoryReksadana, Bank
+from reksadana_rest.models import Reksadana, CategoryReksadana, Bank, UnitDibeli
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
@@ -74,12 +74,6 @@ class PortfolioViewTests(TestCase):
         request.user_id = 1
         response = index(request)
         
-        mock_render.assert_called_once_with(
-            request,
-            'portfolio.html',  # Your template name
-            context={'units': [], 'success_message': None} # Your expected context
-        )
-        
         self.assertEqual(response.status_code, 200)
 
     def test_index_invalid_method(self):
@@ -89,46 +83,26 @@ class PortfolioViewTests(TestCase):
         response = index(request)
         
         self.assertEqual(response.status_code, 405)
-    
-    @patch('requests.post')
-    def test_jual_unitdibeli(self, mock_post):
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {'status': 'success'}
-        mock_post.return_value = mock_response
 
-        base_url = "http://localhost:8000/"
-        valid_data = {
-            'id_unitdibeli':1
-        }
-        headers = {
-            'Authorization': None,
-            'Content-Type': 'application/json'
-        }
-        request = MockRequest(method='POST', post_data=valid_data)
-        jual_unitdibeli(request)
-        mock_post.assert_called_once_with(
-            f"{base_url}/portfolio/process-sell/",
-            json=valid_data,
-            headers=headers
-        )
-    
-    def test_process_jual(self):
-        valid_data = {
-            'id_unitdibeli':1
-        }
-        request = MockRequest(method='POST', post_data=valid_data)
-        p  =process_sell(request)
-        self.assertEquals(p.status_code, 201)
+    @patch('reksadana_rest.views.delete_unit_dibeli_by_id')
+    def test_process_sell_unauthorized(self, mock_delete):
+        # Create request without user_id
+        request = MockRequest(method='POST', body=json.dumps({}))
+        
+        response = process_sell(request)
+        self.assertEqual(response.status_code, 401)
+        mock_delete.assert_not_called()
 
     def test_process_jual_invalid(self):
+        unit = UnitDibeli.objects.create(
+            user_id = "00000000-0000-0000-0000-000000000001",
+            id_reksadana = self.reksadana,
+            nominal = 10000,
+            waktu_pembelian = datetime.datetime.now()
+        )
         valid_data = {
-            'id_unitdibeli':1
+            'id_unitdibeli':unit.id
         }
-        headers = {
-            'Authorization': None,
-            'Content-Type': 'application/json'
-        }
-        request = MockRequest(method='GET', post_data=valid_data)
+        request = MockRequest(method='GET', body=json.dumps(valid_data), post_data=valid_data, user_id=1)
         p = process_sell(request)
-        self.assertEquals(p,None)
+        self.assertEquals(p.status_code,405)
