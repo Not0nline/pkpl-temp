@@ -90,8 +90,9 @@ def jual_unitdibeli(request):
             }).encode('utf-8')
 
             # Call delete function
+            print(33)
             response = delete_unit_dibeli_by_id(request)
-
+            print(44, response)
             # Check response status
             if response.status_code == 201:
                 messages.success(request, "Successfully sold unit reksadana")
@@ -125,8 +126,9 @@ def process_sell(request):
     if request.method == 'POST':
         try:
             # Call delete function
+            print(11)
             response = delete_unit_dibeli_by_id(request)
-
+            print(22, response)
             # Check response status
             if response.status_code == 201:
                 return JsonResponse({"message": "Successfully sold unit reksadana"}, status=201)
