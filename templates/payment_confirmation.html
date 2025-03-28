@@ -46,7 +46,7 @@
             
             <div class="payment-options">
                 <h4>Payment Method</h4>
-                <form method="POST" action="{% url 'process_payment' %}">
+                <form method="POST" action="{% url 'dashboard:process_payment' %}">
                     {% csrf_token %}
                     <input type="hidden" name="id_reksadana" value="{{ reksadana_id }}">
                     <input type="hidden" name="nominal" value="{{ nominal|floatformat:0 }}">
@@ -63,7 +63,7 @@
                     
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">Confirm and Pay</button>
-                        <a href="{% url 'index' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{% url 'auth_page:index' %}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

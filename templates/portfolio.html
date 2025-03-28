@@ -27,7 +27,7 @@
                     <p><strong>Amount:</strong> IDR {{ unit.nominal }}</p>
                     <p><strong>Current Value:</strong> IDR {{ unit.current_value }}</p>
                     
-                    <form method="POST" action="{% url 'jual_unitdibeli' %}">
+                    <form method="POST" action="{% url 'portfolio:jual_unitdibeli' %}">
                         {% csrf_token %}
                         <input type="hidden" name="id_unitdibeli" value="{{ unit.id }}">
                         <button type="submit" class="btn btn-danger">Sell Units</button>

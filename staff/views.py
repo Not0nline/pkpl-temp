@@ -29,7 +29,7 @@ def show_dashboard(request):
         return render("error_page.html", 
                       {'message':'Unauthorized or forbidden access'})
     
-@csrf_exempt
+# @csrf_exempt
 def create_reksadana_staff(request):
     auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:

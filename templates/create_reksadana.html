@@ -10,7 +10,7 @@
         <div class="error-message">{{ error }}</div>
     {% endif %}
     
-    <form method="POST" action="{% url 'create_reksadana' %}">
+    <form method="POST" action="{% url 'staff:create_reksadana' %}">
         {% csrf_token %}
         <div class="form-group">
             <label for="name">Reksadana Name:</label>

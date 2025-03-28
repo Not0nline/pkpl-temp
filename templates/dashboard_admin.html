@@ -23,7 +23,7 @@
 
     <!-- Button to Create a New Reksadana -->
     <div class="mb-3">
-        <a href="{% url 'create_reksadana' %}" class="btn btn-primary">
+        <a href="{% url 'staff:create_reksadana' %}" class="btn btn-primary">
             Create Reksadana
         </a>
     </div>
@@ -48,7 +48,7 @@
                             <p><strong>Description:</strong> {{ item.description|truncatewords:15 }}</p>
                         </div>
                         <div class="card-footer">
-                            <a href="{% url 'edit_reksadana' %}?reksadana_id={{ item.id_reksadana }}"
+                            <a href="{% url 'staff:edit_reksadana' %}?reksadana_id={{ item.id_reksadana }}"
                                class="btn btn-secondary btn-block">
                                 Edit Reksadana
                             </a>

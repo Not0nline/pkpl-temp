@@ -6,7 +6,7 @@
 <div class="buy-container">
     <h2>Buy Reksadana Units</h2>
     
-    <form method="POST" action="{% url 'beli_unit' reksadana_id %}">
+    <form method="POST" action="{% url 'dashboard:beli_unit' reksadana_id %}">
         {% csrf_token %}
         <div class="form-group">
             <label for="nominal">Amount (IDR):</label>
@@ -14,7 +14,7 @@
         </div>
         
         <button type="submit" class="btn btn-primary">Confirm Purchase</button>
-        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+        <a href="{% url 'dashboard:dashboard' %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 {% endblock %}
