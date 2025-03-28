@@ -79,7 +79,7 @@ def jual_unitdibeli(request):
     # Ensure user is authenticated
     if not request.user_id:
         messages.error(request, "Unauthorized access")
-        return redirect('login')
+        return redirect('auth_page:login')
 
     if request.method == 'POST':
         # Get the unit ID to sell
@@ -87,7 +87,7 @@ def jual_unitdibeli(request):
         
         if not id_unitdibeli:
             messages.error(request, "Missing unit ID")
-            return redirect('/portfolio/')
+            return redirect('portfolio:index')
 
         try:
             # Prepare request body
@@ -112,11 +112,11 @@ def jual_unitdibeli(request):
         except Exception as e:
             messages.error(request, f"An error occurred: {str(e)}")
 
-        return redirect('/portfolio/')
+        return redirect('portfolio:index')
 
     # Handle non-POST requests
     messages.error(request, "Invalid request method")
-    return redirect('/portfolio/')
+    return redirect('portfolio:index')
 
 
 # @csrf_exempt
