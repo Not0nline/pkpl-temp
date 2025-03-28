@@ -81,7 +81,6 @@ def edit_reksadana(request):
         kustodian_id = request.POST.get('kustodian_id')
         penampung_id = request.POST.get('penampung_id')
         risk_level = request.POST.get('tingkat_resiko')
-        
         # Validate form data
         if not all([id_reksadana, name, category_id, kustodian_id, penampung_id, risk_level]):
             return JsonResponse({'error': 'All fields are required'}, status=400)
@@ -97,7 +96,6 @@ def edit_reksadana(request):
             return JsonResponse({"error": "Invalid category ID"}, status=400)
         except Bank.DoesNotExist:
             return JsonResponse({"error": "Invalid bank ID"}, status=400)
-        
         reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
         reksadana.name = name
         reksadana.category = category
@@ -199,7 +197,6 @@ def delete_unit_dibeli_by_id(request):
             return JsonResponse({"error": "id_unitdibeli is required"}, status=400)
 
         unitdibeli = get_object_or_404(UnitDibeli, id=id_unitdibeli)
-
         if str(request.user_id) != str(unitdibeli.user_id):
             return JsonResponse({"error": "You are not authorized to delete this unit"}, status=403)
 
@@ -275,3 +272,5 @@ def create_reksadana_api(request):
     
     except Exception as e:
         return JsonResponse({'error': f'Error creating Reksadana: {str(e)}'}, status=500)
+    
+    

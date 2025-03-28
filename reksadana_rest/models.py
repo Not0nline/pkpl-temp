@@ -38,7 +38,6 @@ class Reksadana(models.Model):
 
     def generate_made_up_history_per_hour(self):
         history = HistoryReksadana.objects.filter(id_reksadana=self.id_reksadana).order_by('-date')
-        print("aaaa", history)
         if not history.exists():
             # If no history, create the first entry
             new_nav = randint(50, 150)
@@ -51,12 +50,10 @@ class Reksadana(models.Model):
                 aum=new_aum
             )
 
-            print('ppp',datetime.datetime.now())
             return
 
         # Get the latest history entry
         last_entry = history.first()
-        print('uwu',last_entry)
         last_nav = last_entry.nav
         last_aum = last_entry.aum
         last_date = last_entry.date
