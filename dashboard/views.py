@@ -40,7 +40,7 @@ def dashboard(request):
     try:
         # Get all reksadana data
         response = get_all_reksadana(request)
-        print("zczc",response)
+        # print("zczc",response)
         if response.status_code != 200:
             return render(request, "dashboard.html", {
                 "error": "Failed to load reksadana data",
