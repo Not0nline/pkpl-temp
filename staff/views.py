@@ -30,7 +30,7 @@ def show_dashboard(request):
                       {'message':'Unauthorized or forbidden access'})
     
 @csrf_exempt
-def create_uwu(request):
+def create_reksadana(request):
     auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
@@ -84,7 +84,7 @@ def create_uwu(request):
         return JsonResponse({'error': f'Auth service unavailable: {str(e)}'}, status=503)
     
 
-def edit_uwu(request):
+def edit_reksadana(request):
     auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
