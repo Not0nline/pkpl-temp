@@ -11,7 +11,6 @@ def register_view(request):
     if request.method == 'POST':
         try:
             # Get data from form
-            nama = request.POST.get('nama')
             phone_number = request.POST.get('phone_number')
             country_code = request.POST.get('country_code')
             card_number = request.POST.get('card_number').replace(' ', '')  
@@ -19,7 +18,6 @@ def register_view(request):
             
             # Prepare data for API
             payload = {
-                "nama": nama,
                 "phone_number": phone_number,
                 "country_code": country_code,
                 "card_number": card_number,
