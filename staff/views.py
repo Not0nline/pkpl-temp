@@ -2,7 +2,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from reksadana_rest.models import Reksadana
-from reksadana_rest.views import create_reksadana, edit_reksadana, get_all_reksadana, get_all_categories, get_all_banks, fetch_all_reksadanas
+from reksadana_rest.views import create_reksadana, edit_reksadana, get_all_categories, get_all_banks, fetch_all_reksadanas
 import requests
 import json
 

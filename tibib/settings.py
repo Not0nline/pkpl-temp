@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 import dotenv
+import base64
+from cryptography.hazmat.primitives import serialization
 dotenv.load_dotenv()
 
 JWT_SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-very-secret-key')
@@ -23,6 +25,34 @@ JWT_EXPIRATION_SECONDS = 3600  # 1 hour
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 BASE_BACKEND_URL = os.getenv('BASE_BACKEND_URL', 'http://localhost:8000/')
+
+# Decode Base64 keys
+sender_private_key_pem = base64.b64decode(os.getenv("SENDER_PRIVATE_KEY"))
+sender_public_key_pem = base64.b64decode(os.getenv("SENDER_PUBLIC_KEY"))
+receiver_private_key_pem = base64.b64decode(os.getenv("RECEIVER_PRIVATE_KEY"))
+receiver_public_key_pem = base64.b64decode(os.getenv("RECEIVER_PUBLIC_KEY"))
+
+# Load Receiver's Private Key
+RECEIVER_PUBLIC_KEY = serialization.load_pem_public_key(
+    receiver_public_key_pem
+)
+
+# Load Receiver's Public Key
+RECEIVER_PRIVATE_KEY = serialization.load_pem_private_key(
+    receiver_private_key_pem,
+    password=None
+)
+
+# Load Sender's Private Key
+SENDER_PRIVATE_KEY = serialization.load_pem_private_key(
+    sender_private_key_pem,
+    password=None
+)
+
+# Load Sender's Public Key
+SENDER_PUBLIC_KEY = serialization.load_pem_public_key(
+    sender_public_key_pem
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
