@@ -22,10 +22,10 @@
                         {% endif %}
                         <li><a href="{% url 'index' %}">Portfolio</a></li>
                         <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                        <li><a href="{% url 'logout' %}">Logout</a></li>
+                        <li><a href="{% url 'auth_page:logout' %}">Logout</a></li>
                     {% else %}
-                        <li><a href="{% url 'login' %}">Login</a></li>
-                        <li><a href="{% url 'register' %}">Register</a></li>
+                        <li><a href="{% url 'auth_page:login' %}">Login</a></li>
+                        <li><a href="{% url 'auth_page:register' %}">Register</a></li>
                     {% endif %}
                 </ul>
             </div>

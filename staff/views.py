@@ -30,7 +30,7 @@ def show_dashboard(request):
                       {'message':'Unauthorized or forbidden access'})
     
 @csrf_exempt
-def create_reksadana(request):
+def create_reksadana_staff(request):
     auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
@@ -56,12 +56,11 @@ def create_reksadana(request):
                         'banks': get_all_banks(request)
                     })
             else:
-                # TODO
                 return JsonResponse({'error': 'Unauthorized or forbidden access'}, status=response.status_code)
-
-        except requests as e:
-            # TODO
+        except ConnectionError as e:
             return JsonResponse({'error': f'Auth service unavailable: {str(e)}'}, status=503)
+        except Exception as e:
+            return JsonResponse({'error': f'{str(e)}'}, status=503)
     
     # Render Create Reksadana Page
     try:
@@ -81,10 +80,10 @@ def create_reksadana(request):
             return JsonResponse({'error': 'Unauthorized or forbidden access'}, status=response.status_code)
  
     except Exception as e:
-        return JsonResponse({'error': f'Auth service unavailable: {str(e)}'}, status=503)
+        return JsonResponse({'error': f'{str(e)}'}, status=503)
     
 
-def edit_reksadana(request):
+def edit_reksadana_staff(request):
     auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
@@ -142,46 +141,3 @@ def edit_reksadana(request):
  
     except Exception as e:
         return JsonResponse({'error': f'Auth service unavailable: {str(e)}'}, status=503)
-
-# @csrf_exempt
-# def create_reksadana(request):
-#     if request.method == 'POST':
-#         # Check if user is staff
-#         user_role = request.session.get('user_role', None)
-#         if user_role != 'user':
-#             return render(request, 'create_reksadana.html', {
-#                 'error': 'You do not have permission to create reksadana'
-#             })
-
-#         try:
-#             # Process the form submission
-#             create_response = create_reksadana_api(request)
-#             if create_response.status_code == 201:  # Created
-#                 return redirect('/staff/daftar_reksadana/')
-#             else:
-#                 error_data = json.loads(create_response.content)
-#                 return render(request, 'create_reksadana.html', {
-#                     'error': error_data.get('error', 'Failed to create reksadana'),
-#                     'categories': get_all_categories(request),
-#                     'banks': get_all_banks(request)
-#                 })
-#         except Exception as e:
-#             return render(request, 'create_reksadana.html', {
-#                 'error': f'Error: {str(e)}',
-#                 'categories': get_all_categories(request),
-#                 'banks': get_all_banks(request)
-#             })
-
-#     # GET request - show the form
-#     try:
-#         categories = get_all_categories(request)
-#         banks = get_all_banks(request)
-#         return render(request, "create_reksadana.html", {
-#             'categories': categories,
-#             'banks': banks
-#         })
-#     except Exception as e:
-#         return render(request, "create_reksadana.html", {
-#             'error': f'Error loading form data: {str(e)}'
-#         })
-        

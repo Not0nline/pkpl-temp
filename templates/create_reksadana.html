@@ -6,6 +6,10 @@
 <div class="create-reksadana-container">
     <h2>Create New Reksadana</h2>
     
+    {% if error %}
+        <div class="error-message">{{ error }}</div>
+    {% endif %}
+    
     <form method="POST" action="{% url 'create_reksadana' %}">
         {% csrf_token %}
         <div class="form-group">
