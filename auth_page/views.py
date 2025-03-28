@@ -32,7 +32,7 @@ def register_view(request):
                                      headers={'Content-Type': 'application/json'})
             
             if response.status_code == 200:
-                return redirect('login')
+                return redirect('auth_page:login')
             else:
                 return render(request, 'register.html', {
                     'error': 'Registration failed. Please try again.'
@@ -66,7 +66,7 @@ def login_view(request):
             data = response.json()  # Convert response to dictionary
             token = data.get("Authorization")  # Get the token
             if response.status_code == 200:
-                response = redirect('home')
+                response = redirect('auth_page:home')
                 response.set_cookie(
                     key="jwt_token",
                     value=token,
@@ -93,6 +93,6 @@ def home_view(request):
     })
 
 def logout_view(request):
-    response = redirect('login')
+    response = redirect('auth_page:login')
     response.delete_cookie("jwt_token")  # Remove the JWT cookie
     return response

@@ -41,7 +41,7 @@
                             <p><strong>Description:</strong> {{ item.description|truncatewords:15 }}</p>
                         </div>
                         <div class="card-footer">
-                            <form method="POST" action="{% url 'beli_unit' %}">
+                            <form method="POST" action="{% url 'dashboard:beli_unit' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="id_reksadana" value="{{ item.id_reksadana }}">
                                 <div class="form-group mb-2">

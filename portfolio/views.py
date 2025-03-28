@@ -1,5 +1,10 @@
 import json
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
+
+from django.contrib import messages
 import requests
 import httpx
 from django.conf import settings
@@ -60,40 +65,80 @@ def index(request):
             
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-@csrf_exempt
+# @csrf_exempt
 def jual_unitdibeli(request):
-    if not hasattr(request, "user_id"):
-        return JsonResponse({"error": "Unauthorized"}, status=401)
-    if request.method=='POST':
-        #Process jual
-        data = request.POST
-        id_unitdibeli = data.get("id_unitdibeli")
+    """
+    Process selling a unit
+    """
+    # Ensure user is authenticated
+    if not request.user_id:
+        messages.error(request, "Unauthorized access")
+        return redirect('auth_page:login')
 
-        base_url = settings.BASE_BACKEND_URL  # Example: "http://127.0.0.1:8000"
-        jwt = request.COOKIES.get("jwt_token")
-        headers = {
-            "Authorization": jwt,  # Add JWT Token here
-            "Content-Type": "application/json"
-        }
-
-        data = {
-            "id_unitdibeli": id_unitdibeli
-        }
+    if request.method == 'POST':
+        # Get the unit ID to sell
+        id_unitdibeli = request.POST.get("id_unitdibeli")
         
-        # return delete_unit_dibeli_by_id(request)
-        
-        requests.post(
-            f"{base_url}/portfolio/process-sell/",  # Full URL
-            json=data,
-            headers=headers,
-        )
+        if not id_unitdibeli:
+            messages.error(request, "Missing unit ID")
+            return redirect('portfolio:index')
 
-        return redirect('/portfolio/')
+        try:
+            # Prepare request body
+            request._body = json.dumps({
+                "id_unitdibeli": id_unitdibeli
+            }).encode('utf-8')
+
+            # Call delete function
+            response = delete_unit_dibeli_by_id(request)
+
+            # Check response status
+            if response.status_code == 201:
+                messages.success(request, "Successfully sold unit reksadana")
+            else:
+                # Parse error message if available
+                try:
+                    error_data = json.loads(response.content.decode('utf-8'))
+                    messages.error(request, error_data.get('error', 'Failed to sell unit'))
+                except:
+                    messages.error(request, 'Failed to sell unit')
+
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+
+        return redirect('portfolio:index')
+
+    # Handle non-POST requests
+    messages.error(request, "Invalid request method")
+    return redirect('portfolio:index')
 
 
-@csrf_exempt
+# @csrf_exempt
 def process_sell(request):
-    if request.method=='POST':
-        #Process jual
-        delete_unit_dibeli_by_id(request)
-        return JsonResponse({"message": "Successfully sold unit reksadana"}, status=201)
+    """
+    Validate and process the sell request
+    """
+    # Ensure user is authenticated
+    if not request.user_id:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    if request.method == 'POST':
+        try:
+            # Call delete function
+            response = delete_unit_dibeli_by_id(request)
+
+            # Check response status
+            if response.status_code == 201:
+                return JsonResponse({"message": "Successfully sold unit reksadana"}, status=201)
+            else:
+                # Parse error message if available
+                try:
+                    error_data = json.loads(response.content.decode('utf-8'))
+                    return JsonResponse({"error": error_data.get('error', 'Failed to sell unit')}, status=400)
+                except:
+                    return JsonResponse({"error": "Failed to sell unit"}, status=400)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)

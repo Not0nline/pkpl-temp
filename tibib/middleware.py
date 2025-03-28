@@ -45,7 +45,7 @@ class JWTAuthenticationMiddleware:
                     return JsonResponse({"error": "Token has expired"}, status=401)
                 else:
                     # For non-API routes, redirect to login
-                    return redirect('login')
+                    return redirect('auth_page:login')
                 
             except jwt.InvalidTokenError as e:
                 print("JWT Error:", str(e))

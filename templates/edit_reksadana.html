@@ -6,7 +6,7 @@
 <div class="create-reksadana-container">
     <h2>Edit Reksadana</h2>
     
-    <form method="POST" action="{% url 'edit_reksadana' %}">
+    <form method="POST" action="{% url 'staff:edit_reksadana' %}">
         {% csrf_token %}
         
         <!-- Hidden field to store the ID -->
