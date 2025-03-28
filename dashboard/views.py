@@ -33,7 +33,7 @@ def encode_value(value):
 # Create your views here.
 def dashboard(request):
     # Check authentication using both request attributes and session
-    user_id = getattr(request, 'user_id', None) or request.session.get('user_id')
+    user_id = getattr(request, 'user_id', None) 
     if not user_id:
         return redirect('login')
         
@@ -61,7 +61,7 @@ def dashboard(request):
             "user_name": request.user_username
         })
 
-@csrf_exempt
+# @csrf_exempt
 def beli_unit(request):
     # Check authentication using both request attributes
     user_id = request.user_id
@@ -117,7 +117,7 @@ def beli_unit(request):
     return redirect('index')
 
 # async function call
-@csrf_exempt
+# @csrf_exempt
 def process_payment(request):
     if request.method == 'POST':
         try:

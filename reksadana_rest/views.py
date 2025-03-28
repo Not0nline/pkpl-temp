@@ -28,7 +28,7 @@ def decode_value(encrypted_value):
 
     return unpadded_data.decode('utf-8')
 
-@csrf_exempt  # Remove this if CSRF protection is handled properly
+# @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
     try:
         # Extract form data
@@ -118,7 +118,7 @@ def get_all_reksadana(request):
         reksadana_list = Reksadana.objects.all().values()
         return JsonResponse({"reksadanas": list(reksadana_list)}, status=200)
 
-@csrf_exempt
+# @csrf_exempt
 def create_unit_dibeli(request):
     if request.method == "POST":
         try:
@@ -187,7 +187,7 @@ def get_reksadana_history(request, id_reksadana):
     # except:
     #     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-@csrf_exempt
+# @csrf_exempt
 def delete_unit_dibeli_by_id(request):
     if request.method != 'POST':
         return JsonResponse({"error": "Method not allowed"}, status=405)

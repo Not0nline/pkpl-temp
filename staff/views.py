@@ -29,8 +29,8 @@ def show_dashboard(request):
         return render("error_page.html", 
                       {'message':'Unauthorized or forbidden access'})
     
-@csrf_exempt
-def create_reksadana(request):
+# @csrf_exempt
+def create_reksadana_staff(request):
     auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
@@ -84,7 +84,7 @@ def create_reksadana(request):
         return JsonResponse({'error': f'Auth service unavailable: {str(e)}'}, status=503)
     
 
-def edit_reksadana(request):
+def edit_reksadana_staff(request):
     auth_header = request.COOKIES.get('jwt_token')
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
