@@ -9,7 +9,6 @@ from django.views.decorators.csrf import csrf_exempt
 from reksadana_rest.views import get_units_by_user,delete_unit_dibeli_by_id
 from tibib.utils import *
 
-# TODO: Not tested with postman
 def index(request):
     if request.method == 'GET':
         try:
@@ -20,12 +19,12 @@ def index(request):
             # print("User ID as attr:", getattr(request, 'user_id', 'Not set'))
             
             # Ensure user_id is set on request if it's in the session
-            if not hasattr(request, 'user_id') and 'user_id' in request.session:
+            if hasattr(request, 'session') and not hasattr(request, 'user_id') and 'user_id' in request.session:
                 request.user_id = request.session['user_id']
                 # print(f"Manually set user_id on request: {request.user_id}")
             
             # Make sure Authorization header is set if token is in session
-            if 'token' in request.session and not request.META.get('HTTP_AUTHORIZATION'):
+            if hasattr(request, 'session') and 'token' in request.session and not request.META.get('HTTP_AUTHORIZATION'):
                 request.META['HTTP_AUTHORIZATION'] = request.session['token']
                 # print(f"Manually set Authorization header from session token")
             
@@ -38,34 +37,29 @@ def index(request):
                 return render(request, 'portfolio.html', context={
                     "error": error_data.get("error", "An error occurred"),
                     "units": [],
-                    "user_name": request.session.get('nama', 'User')
                 })
             
             # Get success message from session if it exists
             success_message = None
-            if 'success_message' in request.session:
+            if request.session and 'success_message' in request.session:
                 success_message = request.session['success_message']
                 # Remove the message after using it to prevent it from persisting
                 del request.session['success_message']
                 request.session.modified = True
-                
             data = json.loads(response.content)
             return render(request, 'portfolio.html', context={
                 "units": data,
                 "success_message": success_message,
-                "user_name": request.session.get('nama', 'User')
             })
         except Exception as e:
             print(f"Error in portfolio index: {str(e)}")
             return render(request, 'portfolio.html', context={
                 "error": f"Error loading portfolio: {str(e)}",
                 "units": [],
-                "user_name": request.session.get('nama', 'User')
             })
             
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-# TODO: Not tested with postman
 @csrf_exempt
 def jual_unitdibeli(request):
     if not hasattr(request, "user_id"):
