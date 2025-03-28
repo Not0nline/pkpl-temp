@@ -7,7 +7,7 @@ from staff.views import create_reksadana_staff
 class TestCreateReksadanaStaff(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.url = reverse('create_reksadana')  
+        self.url = reverse('staff:create_reksadana')  
 
     @patch('staff.views.requests.get')
     def test_missing_jwt_cookie(self, mock_requests_get):
