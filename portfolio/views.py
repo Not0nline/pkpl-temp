@@ -1,9 +1,12 @@
 import json
+import requests
+from django.conf import settings
 
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from reksadana_rest.views import get_units_by_user, delete_unit_dibeli_by_id
+from django.views.decorators.csrf import csrf_exempt
 
 def index(request):
     """
