@@ -17,7 +17,6 @@ def dashboard(request):
     try:
         # Get all reksadana data
         response = get_all_reksadana(request)
-        # print("zczc",response)
         if response.status_code != 200:
             return render(request, "dashboard.html", {
                 "error": "Failed to load reksadana data",
@@ -40,7 +39,6 @@ def dashboard(request):
 
 # @csrf_exempt
 def beli_unit(request):
-    # Check authentication using both request attributes
     user_id = request.user_id
     if not user_id:
         return redirect('auth_page:login')
