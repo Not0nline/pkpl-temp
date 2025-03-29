@@ -96,6 +96,5 @@ def home_view(request):
 
 def logout_view(request):
     response = redirect('auth_page:login')
-    response.flush()
-    # response.delete_cookie("jwt_token")
+    response.delete_cookie("jwt_token")
     return response
