@@ -1,13 +1,10 @@
 import json
-
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from reksadana_rest.views import get_all_reksadana, create_unit_dibeli
-import os
-import base64
-from tibib.utils import *
+from tibib.utils import encrypt_and_sign
 
 
 # Create your views here.
@@ -20,7 +17,6 @@ def dashboard(request):
     try:
         # Get all reksadana data
         response = get_all_reksadana(request)
-        # print("zczc",response)
         if response.status_code != 200:
             return render(request, "dashboard.html", {
                 "error": "Failed to load reksadana data",
@@ -43,7 +39,6 @@ def dashboard(request):
 
 # @csrf_exempt
 def beli_unit(request):
-    # Check authentication using both request attributes
     user_id = request.user_id
     if not user_id:
         return redirect('auth_page:login')
@@ -128,10 +123,13 @@ def process_payment(request):
                     "back_url": "/"
                 })
             
+            
             # Also prepare the JSON body for the API functions
+            nominal_encrypted, signature = encrypt_and_sign(str(nominal_int))
             request._body = json.dumps({
                 'id_reksadana': data.get('id_reksadana'),
-                'nominal': encode_value(nominal_int),
+                'signature': signature,
+                'nominal': nominal_encrypted,
             }).encode('utf-8')
 
             # Create unit dibeli
