@@ -2,7 +2,7 @@ from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
 
-from staff.views import create_reksadana_staff  
+from staff.views import create_reksadana_staff, show_dashboard
 
 class TestCreateReksadanaStaff(TestCase):
     def setUp(self):
@@ -176,3 +176,85 @@ class TestCreateReksadanaStaff(TestCase):
         response = create_reksadana_staff(request)
         self.assertEqual(response.status_code, 503)
         self.assertIn(b'error', response.content)
+
+class TestShowDashboard(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.url = reverse('staff:dashboard_admin')  
+    
+    @patch('staff.views.requests.get')
+    def test_show_dashboard_missing_jwt(self, mock_requests_get):
+        """
+        If 'jwt_token' is missing in cookies, returns 401.
+        """
+        request = self.factory.get(self.url)
+        response = show_dashboard(request)
+        self.assertEqual(response.status_code, 401)
+        self.assertJSONEqual(
+            response.content,
+            {'error': 'Missing Authorization token'}
+        )
+        mock_requests_get.assert_not_called()
+        
+    @patch('staff.views.requests.get')
+    def test_show_dashboard_get__request_exception(self, mock_requests_get):
+        """
+        If requests.get raises an exception on a GET request,
+        the view returns a 503 JSON error.
+        """
+        mock_requests_get.side_effect = ConnectionError("Some GET error")
+        
+        request = self.factory.get(self.url)
+        request.COOKIES['jwt_token'] = 'test-jwt'
+        
+        response = show_dashboard(request)
+        self.assertEqual(response.status_code, 503)
+        self.assertIn(b'error', response.content)
+        self.assertIn(b'Auth service unavailable', response.content)
+
+    # Valid Staff (requests.get -> 200)
+    @patch('staff.views.fetch_all_reksadanas')
+    @patch('staff.views.requests.get')
+    def test_show_dashboard_valid_staff(self, mock_requests_get, mock_fetch_all):
+        """
+        If requests.get to /staff/ returns 200, the method should:
+          - Call fetch_all_reksadanas()
+          - Render 'dashboard_admin.html'
+          - Pass the reksadanas in context
+        """
+        mock_requests_get.return_value.status_code = 200
+
+        # Mock fetch_all_reksadanas return value
+        mock_fetch_all.return_value = [
+            {'id': 1, 'name': 'Some Reksadana'},
+            {'id': 2, 'name': 'Another Reksadana'}
+        ]
+
+        request = self.factory.get(self.url)
+        request.COOKIES['jwt_token'] = 'test-jwt'
+        
+        response = show_dashboard(request)
+        self.assertEqual(response.status_code, 200)
+        # Check that 'reksadanas' is in the context
+        self.assertIn(b'Some Reksadana', response.content)
+        self.assertIn(b'Another Reksadana', response.content)
+        mock_requests_get.assert_called_once()
+        mock_fetch_all.assert_called_once()
+
+    # Invalid Staff (requests.get -> e.g. 401)
+    @patch('staff.views.requests.get')
+    def test_show_dashboard_invalid_staff(self, mock_requests_get):
+        """
+        If requests.get returns a non-200 (403, 401, 500, etc.),
+        the view should render 'error.html' with a forbidden message.
+        """
+        mock_requests_get.return_value.status_code = 401
+
+        request = self.factory.get(self.url)
+        request.COOKIES['jwt_token'] = 'test-jwt'
+
+        response = show_dashboard(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Unauthorized or forbidden access")
+
+        mock_requests_get.assert_called_once()

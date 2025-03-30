@@ -14,20 +14,25 @@ def show_dashboard(request):
     if not auth_header:
         return JsonResponse({'error': 'Missing Authorization token'}, status=401)
     
-    response = requests.get(
-                f"{API_BASE_URL}/staff/",
-                headers={'Authorization': auth_header}
-            )
+    try:
+        response = requests.get(
+                    f"{API_BASE_URL}/staff/",
+                    headers={'Authorization': auth_header}
+                )
 
-    if response.status_code == 200:
-        reksadanas = fetch_all_reksadanas()
-        context = {
-            "reksadanas": reksadanas,
-        }
-        return render(request, "dashboard_admin.html",context)
-    else:
-        return render("error_page.html", 
-                      {'message':'Unauthorized or forbidden access'})
+        if response.status_code == 200:
+            reksadanas = fetch_all_reksadanas()
+            context = {
+                "reksadanas": reksadanas,
+            }
+            return render(request, "dashboard_admin.html",context)
+        else:
+            return render(request, "error.html", {'error': 'Unauthorized or forbidden access'}) 
+    except ConnectionError as e:
+        return JsonResponse({'error': f'Auth service unavailable: {str(e)}'}, status=503)
+    except Exception as e: 
+        return JsonResponse({'error': f'{str(e)}'}, status=500) 
+        
     
 # @csrf_exempt
 def create_reksadana_staff(request):
@@ -60,7 +65,7 @@ def create_reksadana_staff(request):
         except ConnectionError as e:
             return JsonResponse({'error': f'Auth service unavailable: {str(e)}'}, status=503)
         except Exception as e:
-            return JsonResponse({'error': f'{str(e)}'}, status=503)
+            return JsonResponse({'error': f'{str(e)}'}, status=500)
     
     # Render Create Reksadana Page
     try:
