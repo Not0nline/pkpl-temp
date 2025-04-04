@@ -3,7 +3,17 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
 from django.conf import settings
 import re
+from django.shortcuts import render
 
+def handle_error(request, status_code, error_message, back_url=None):
+    context = {
+        'error': f"{status_code} - {error_message}",
+        'status_code': status_code,
+        'back_url': back_url or '/',
+        'user_role':request.user_role
+    }
+    print("request", request.user_role)
+    return render(request, "error.html", context, status=status_code)
 
 def encrypt_and_sign(message):
     # Convert message to bytes

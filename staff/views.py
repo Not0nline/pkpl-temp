@@ -2,14 +2,7 @@ from django.shortcuts import redirect, render
 from reksadana_rest.models import Reksadana
 from reksadana_rest.views import create_reksadana, edit_reksadana, get_all_categories, get_all_banks, fetch_all_reksadanas
 import json
-
-def handle_error(request, status_code, error_message, back_url=None):
-    context = {
-        'error': f"{status_code} - {error_message}",
-        'status_code': status_code,
-        'back_url': back_url or '/'
-    }
-    return render(request, "error.html", context, status=status_code)
+from tibib.utils import handle_error
 
 def show_dashboard(request):
     if request.user_role != 'staff':
