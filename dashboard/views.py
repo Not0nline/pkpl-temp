@@ -36,10 +36,29 @@ def dashboard(request):
             else:
                 reksadana['history'] = []
 
+        # Ini perlu di duplikat kodenya, gegara nav dan aum berubah pas get_reksadana_history
+        #####################################
+        reksadanas2 = get_all_reksadana(request)
+        # Parse response
+        data = json.loads(reksadanas2.content)
+        reksadanas2 = data.get('reksadanas', [])
+        print(reksadanas2)
+
+        for reksadana in reksadanas2:
+            history_response = get_reksadana_history(request, reksadana['id_reksadana'])
+            if history_response.status_code == 200:
+                reksadana['history'] = json.loads(history_response.content)
+            else:
+                reksadana['history'] = []
+        
+        #####################################
+
+
         return render(request, "dashboard.html", {
-            "reksadanas": reksadanas,
+            "reksadanas": reksadanas2,
             "user_name": request.user_username
         })
+        
     except Exception as e:
         return render(request, "dashboard.html", {
             "error": f"An error occurred: {str(e)}",

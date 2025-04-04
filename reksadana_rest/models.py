@@ -5,7 +5,6 @@ from django.db import models
 from random import randint, uniform
 from django.utils import timezone
 
-#TODO: Semua class ini belum ada validasi
 
 class Reksadana(models.Model):
     TINGKAT_RESIKO_CHOICE = [
@@ -97,13 +96,15 @@ class Reksadana(models.Model):
                 aum=new_aum
             )
 
-            self.nav = new_nav
-            self.aum = new_aum
-            self.save()
-
             # Update last_nav and last_aum for next iteration
             last_nav = new_nav
             last_aum = new_aum
+        
+        self.nav = last_nav
+        self.aum = last_aum
+        self.save()
+        self.refresh_from_db()  
+        print("saved", self, self.nav, self.aum)
 
 class Bank(models.Model):
     name = models.CharField(max_length=255)
