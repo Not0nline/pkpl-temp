@@ -363,3 +363,91 @@ input#card_number {
   font-size: 1.1rem;
   margin-top: 20px;
 }
+
+/* Tambahkan di akhir style.css */
+.error-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: var(--background-color);
+}
+
+.error-content {
+  max-width: 600px;
+  width: 100%;
+  padding: 60px 40px;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.error-icon svg {
+  width: 128px;
+  height: 128px;
+  margin-bottom: 30px;
+}
+
+.error-title {
+  color: var(--primary-dark);
+  font-size: 3rem;
+  margin-bottom: 20px;
+  letter-spacing: -1px;
+}
+
+.error-message-container {
+  background: rgba(var(--error-color-rgb), 0.1);
+  border-left: 6px solid var(--error-color);
+  padding: 20px 30px;
+  border-radius: var(--border-radius);
+  margin-bottom: 40px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+}
+
+.error-message {
+  color: var(--dark-gray);
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.btn-primary {
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  gap: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 30px;
+  transition: transform 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+  .error-content {
+    padding: 40px 20px;
+  }
+  
+  .error-title {
+    font-size: 2.4rem;
+  }
+  
+  .error-icon svg {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-primary {
+    padding: 14px 30px;
+    font-size: 1rem;
+  }
+}
