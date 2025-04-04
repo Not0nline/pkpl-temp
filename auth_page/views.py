@@ -98,3 +98,6 @@ def logout_view(request):
     response = redirect('auth_page:login')
     response.delete_cookie("jwt_token")
     return response
+
+def handler404(request,*args, **argv):
+    return render(request, "404.html", context={"user_role":request.user_role})

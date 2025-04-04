@@ -5,10 +5,12 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from reksadana_rest.views import get_all_reksadana, create_unit_dibeli, get_reksadana_history
 import requests
-from tibib.utils import encrypt_and_sign, sanitize_input, decrypt_and_verify
-
+from tibib.utils import encrypt_and_sign, sanitize_input, decrypt_and_verify, handle_error
 
 def dashboard(request):
+    if request.user_role != 'user':
+        return handle_error(request, 403, "Forbidden: You don't have permission to access this page")
+    
     # Check authentication using both request attributes and session
     user_id = getattr(request, 'user_id', None) 
     if not user_id:
@@ -41,7 +43,6 @@ def dashboard(request):
         # Parse response
         data = json.loads(reksadanas2.content)
         reksadanas2 = data.get('reksadanas', [])
-        print(reksadanas2)
 
         for reksadana in reksadanas2:
             history_response = get_reksadana_history(request, reksadana['id_reksadana'])
@@ -55,7 +56,8 @@ def dashboard(request):
 
         return render(request, "dashboard.html", {
             "reksadanas": reksadanas2,
-            "user_name": request.user_username
+            "user_name": request.user_username,
+            'user_role':request.user_role
         })
         
     except Exception as e:
@@ -66,6 +68,9 @@ def dashboard(request):
 
 # @csrf_exempt
 def beli_unit(request):
+    if request.user_role != 'user':
+        return handle_error(request, 403, "Forbidden: You don't have permission to access this page")
+    
     user_id = getattr(request, 'user_id', None) 
     if not user_id:
         return redirect('auth_page:login')
@@ -137,6 +142,9 @@ def beli_unit(request):
 # async function call
 # @csrf_exempt
 def process_payment(request):
+    if request.user_role != 'user':
+        return handle_error(request, 403, "Forbidden: You don't have permission to access this page")
+    
     if request.method == 'POST':
         try:
             user_id = getattr(request, 'user_id', None) 

@@ -63,7 +63,6 @@ class Reksadana(models.Model):
         
         # Calculate how many hours have passed
         hours_passed = int((current_time - last_date).total_seconds() //  3600)
-        print("hh",hours_passed)
 
         if hours_passed <= 0:
             return  # No new data needed
@@ -103,8 +102,7 @@ class Reksadana(models.Model):
         self.nav = last_nav
         self.aum = last_aum
         self.save()
-        self.refresh_from_db()  
-        print("saved", self, self.nav, self.aum)
+        self.refresh_from_db()
 
 class Bank(models.Model):
     name = models.CharField(max_length=255)
