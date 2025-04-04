@@ -18,6 +18,8 @@ from cryptography.hazmat.primitives import serialization
 dotenv.load_dotenv()
 
 JWT_SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-very-secret-key')
+API_URL = os.getenv('API_URL', 'http://localhost:8000')
+API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:8001')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_SECONDS = 3600  # 1 hour
 
@@ -26,33 +28,42 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 BASE_BACKEND_URL = os.getenv('BASE_BACKEND_URL', 'http://localhost:8000/')
 
-# Decode Base64 keys
-sender_private_key_pem = base64.b64decode(os.getenv("SENDER_PRIVATE_KEY"))
-sender_public_key_pem = base64.b64decode(os.getenv("SENDER_PUBLIC_KEY"))
-receiver_private_key_pem = base64.b64decode(os.getenv("RECEIVER_PRIVATE_KEY"))
-receiver_public_key_pem = base64.b64decode(os.getenv("RECEIVER_PUBLIC_KEY"))
+# Get keys
+sender_private_key_pem = os.getenv("SENDER_PRIVATE_KEY5", "").replace("\\n", "\n").strip()
+sender_public_key_pem = os.getenv("SENDER_PUBLIC_KEY6", "").replace("\\n", "\n").strip()
+receiver_private_key_pem = os.getenv("RECEIVER_PRIVATE_KEY7", "").replace("\\n", "\n").strip()
+receiver_public_key_pem = os.getenv("RECEIVER_PUBLIC_KEY8", "").replace("\\n", "\n").strip()
 
-# Load Receiver's Private Key
-RECEIVER_PUBLIC_KEY = serialization.load_pem_public_key(
-    receiver_public_key_pem
-)
+if receiver_private_key_pem and receiver_public_key_pem and sender_private_key_pem and sender_public_key_pem:
+    try:
+        RECEIVER_PRIVATE_KEY = serialization.load_pem_private_key(
+            receiver_private_key_pem.encode("utf-8"),
+            password=None
+        )
 
-# Load Receiver's Public Key
-RECEIVER_PRIVATE_KEY = serialization.load_pem_private_key(
-    receiver_private_key_pem,
-    password=None
-)
+        RECEIVER_PUBLIC_KEY = serialization.load_pem_public_key(
+            receiver_public_key_pem.encode("utf-8")
+        )
 
-# Load Sender's Private Key
-SENDER_PRIVATE_KEY = serialization.load_pem_private_key(
-    sender_private_key_pem,
-    password=None
-)
+        SENDER_PRIVATE_KEY = serialization.load_pem_private_key(
+            sender_private_key_pem.encode("utf-8"),
+            password=None
+        )
 
-# Load Sender's Public Key
-SENDER_PUBLIC_KEY = serialization.load_pem_public_key(
-    sender_public_key_pem
-)
+        SENDER_PUBLIC_KEY = serialization.load_pem_public_key(
+            sender_public_key_pem.encode("utf-8")
+        )
+
+    except ValueError as e:
+        raise RuntimeError(f"Error loading RSA keys: {e}")
+
+else:
+    RECEIVER_PRIVATE_KEY = None
+    RECEIVER_PUBLIC_KEY = None
+    SENDER_PRIVATE_KEY = None
+    SENDER_PUBLIC_KEY = None
+    raise RuntimeError("RSA keys are missing in the environment variables.")
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -61,9 +72,9 @@ SENDER_PUBLIC_KEY = serialization.load_pem_public_key(
 SECRET_KEY = 'django-insecure-)_u#ywcrhs4)&0bky8c9^wkdpumm#qs@)&2uif1-ba3k-*pqs6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -160,10 +171,22 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
+
+if not DEBUG:
+    # Tell Django to copy static assets into a path called `staticfiles` (this is specific to Render)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    # Enable the WhiteNoise storage backend, which compresses static files to reduce disk use
+    # and renames the files with unique names for each version to support long-term caching
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+if DEBUG:
+    STATICFILES_DIRS = [
+        Path('') / 'static'
+    ]
+else:
+    STATIC_ROOT = Path('') / 'static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

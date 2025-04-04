@@ -4,10 +4,8 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from reksadana_rest.views import get_all_reksadana, create_unit_dibeli, get_reksadana_history
-import os
-import base64
-from tibib.utils import encrypt_and_sign, sanitize_input, handle_error
-
+import requests
+from tibib.utils import encrypt_and_sign, sanitize_input, decrypt_and_verify, handle_error
 
 def dashboard(request):
     if request.user_role != 'user':
@@ -45,7 +43,6 @@ def dashboard(request):
         # Parse response
         data = json.loads(reksadanas2.content)
         reksadanas2 = data.get('reksadanas', [])
-        print(reksadanas2)
 
         for reksadana in reksadanas2:
             history_response = get_reksadana_history(request, reksadana['id_reksadana'])
@@ -105,12 +102,33 @@ def beli_unit(request):
                     "error": "Minimum investment amount is Rp 10,000",
                     "back_url": "/"
                 })
+            # except ValueError:
+            #     return render(request, "error.html", {
+            #         "error": "Invalid amount format",
+            #         "back_url": "/"
+            #     })
+
+            # get user's credit card
+            response = requests.post(f"{settings.API_BASE_URL}/get-card/", 
+                                    headers={'Authorization': request.COOKIES.get('jwt_token')})
+            
+            if response.status_code != 200:
+                print("error ngambil card data")
+                return render(request, "error.html", {
+                    "error": "Failed to retrieve card information",
+                    "back_url": "/"
+                })
+            
+            card_data = response.json()
+            print("card data: ", card_data)
+            card_number = decrypt_and_verify(card_data['credit_card'], card_data['signature'])
             
             # Process payment
             return render(request, "payment_confirmation.html", {
                 "reksadana_id": reksadana_id,
                 "nominal": nominal,
-                "user_id": user_id
+                "user_id": user_id,
+                "card_number": str(card_number)[2:len(str(card_number))-1],  # Remove b' and '
             })
         except Exception as e:
             return render(request, "error.html", {
@@ -140,25 +158,12 @@ def process_payment(request):
                     'user_id': sanitize_input(request.session.get('user_id')),
                     'id_reksadana': sanitize_input(request.POST.get('id_reksadana')),
                     'nominal': sanitize_input(request.POST.get('nominal'), True),
-                    'payment_method': sanitize_input(request.POST.get('payment_method')),
                 }
 
             if not data.get('id_reksadana') or not data.get('nominal'):
                 return JsonResponse({"error": "Missing required fields"}, status=400)
             
             nominal_int = data.get('nominal')
-            
-            # try:
-            #     # Try to handle various formats including commas and currency symbols
-            #     nominal_str = str(data.get('nominal')).replace('Rp', '').replace(',', '').replace('.', '').strip()
-            #     nominal_int = int(nominal_str)
-            # except ValueError as e:
-            #     print(f"Value error when converting nominal: {e}")
-            #     return render(request, "error.html", {
-            #         "error": f"Invalid amount format: {data.get('nominal')}",
-            #         "back_url": "/"
-            #     })
-            
         
             # Also prepare the JSON body for the API functions
             nominal_encrypted, signature = encrypt_and_sign(str(nominal_int))
@@ -167,21 +172,57 @@ def process_payment(request):
                 'signature': signature,
                 'nominal': nominal_encrypted,
             }).encode('utf-8')
-
-            # Create unit dibeli
-            res = create_unit_dibeli(request)
-            if res.status_code != 201:
-                error_data = json.loads(res.content.decode('utf-8'))
+            
+            # get user's credit card
+            response = requests.post(f"{settings.API_BASE_URL}/get-card/", 
+                                    headers={'Authorization': request.COOKIES.get('jwt_token')})
+            
+            if response.status_code != 200:
                 return render(request, "error.html", {
-                    "error": f"Unit creation failed: {error_data.get('error', 'Unknown error')}",
+                    "error": "Failed to retrieve card information",
                     "back_url": "/"
                 })
-
-            # Store success message in session for display on next page
-            request.session['success_message'] = "Your investment has been processed successfully!"
             
-            # Redirect to portfolio page instead of dashboard
-            return redirect('portfolio:index')
+            card_data = response.json()
+            decrypt_and_verify(card_data['credit_card'], card_data['signature'])
+            card_data['nominal'] = nominal_int
+            
+            # Make API request
+            response = requests.post(f"{settings.API_URL}/reksadana/payment-gateway/", 
+                                    json=card_data, 
+                                    headers={'Content-Type': 'application/json', 'Authorization': request.COOKIES.get('jwt_token')})
+            
+            count = 0
+            while response.status_code == 402 and count < 4:
+                response = requests.post(f"{settings.API_URL}/reksadana/payment-gateway/", 
+                                    json=card_data, 
+                                    headers={'Content-Type': 'application/json', 'Authorization': request.COOKIES.get('jwt_token')})
+                count += 1
+
+            if response.status_code != 200:
+                error_data = json.loads(response.content.decode('utf-8'))
+                return render(request, "error.html", {
+                    "error": f"Payment failed: {error_data.get('error', 'Unknown error')}",
+                    "back_url": "/"
+                })
+            
+            else:
+                data = response.json()  # Convert response to dictionary
+
+                # Create unit dibeli
+                res = create_unit_dibeli(request)
+                if res.status_code != 201:
+                    error_data = json.loads(res.content.decode('utf-8'))
+                    return render(request, "error.html", {
+                        "error": f"Unit creation failed: {error_data.get('error', 'Unknown error')}",
+                        "back_url": "/"
+                    })
+
+                # Store success message in session for display on next page
+                request.session['success_message'] = "Your investment has been processed successfully!"
+            
+                # Redirect to portfolio page instead of dashboard
+                return redirect('portfolio:index')
             
         except Exception as e:
             print(f"Exception in process_payment: {str(e)}")

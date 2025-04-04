@@ -9,5 +9,6 @@ urlpatterns = [
     path("create-unitdibeli/", create_unit_dibeli, name="create_unit_dibeli"),
     path("get-unitdibeli-by-user/", get_units_by_user, name="get_units_by_user"),
     path('get-reksadana-history/<uuid:id_reksadana>/', get_reksadana_history, name="get_reksadana_history"),
-    path('edit-reksadana/', edit_reksadana, name="edit_reksadana")
+    path('edit-reksadana/', edit_reksadana, name="edit_reksadana"),
+    path('payment-gateway/', check_payment_gateway_status, name="payment_gateway"),
 ]

@@ -76,7 +76,6 @@ def jual_unitdibeli(request):
         messages.error(request, "Unauthorized access")
         return redirect('auth_page:login')
 
-    print("AAAAAAAAAiuasad")
     if request.method != 'POST':
         messages.error(request, "Invalid request method")
         return redirect('portfolio:index')

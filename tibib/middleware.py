@@ -22,7 +22,6 @@ class JWTAuthenticationMiddleware:
         if any(current_path.startswith(path) for path in exempt_paths):
             return self.get_response(request)
         
-        print("ini middle ware")
         auth_header = request.headers.get("Authorization")
         auth_cookie = request.COOKIES.get("jwt_token")
 
@@ -31,7 +30,6 @@ class JWTAuthenticationMiddleware:
 
         # dari postman
         if auth_header and auth_header.startswith("Bearer "):
-            print("auth_header",auth_header)
             token = auth_header.split(" ")[1]
             try:
                 payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])

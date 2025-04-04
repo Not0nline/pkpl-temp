@@ -5,6 +5,7 @@ from .models import *
 import json
 from tibib.utils import decrypt_and_verify, sanitize_input
 from django.http import Http404
+import random
 
 def create_reksadana(request):
     try:
@@ -107,7 +108,6 @@ def create_unit_dibeli(request):
                 
             # Only decrypt after verifying fields exist
             nominal = decrypt_and_verify(data.get("nominal"), data.get('signature'))
-            print(type(nominal))
 
             # Ensure Reksadana exists, catch Http404 and return 400 instead
             try:
@@ -201,3 +201,24 @@ def get_all_banks(request):
     except Exception as e:
         print(f"Error getting banks: {str(e)}")
         return []
+
+@csrf_exempt
+def check_payment_gateway_status(request):
+    # Generate a random number between 0 and 1
+    rand_val = random.random()
+    
+    if rand_val <= 0.9:  # 90% chance
+        return JsonResponse(
+            {'status': 'success', 'message': 'Request processed successfully'},
+            status=200
+        )
+    elif rand_val <= 0.95:  # 5% chance (10% total remaining, split in half)
+        return JsonResponse(
+            {'status': 'error', 'error': 'Payment required'},
+            status=402
+        )
+    else:  # 5% chance
+        return JsonResponse(
+            {'status': 'error', 'error': 'Internal server error'},
+            status=500
+        )
