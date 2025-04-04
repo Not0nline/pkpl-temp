@@ -45,7 +45,6 @@ def dashboard(request):
         # Parse response
         data = json.loads(reksadanas2.content)
         reksadanas2 = data.get('reksadanas', [])
-        print(reksadanas2)
 
         for reksadana in reksadanas2:
             history_response = get_reksadana_history(request, reksadana['id_reksadana'])

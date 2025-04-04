@@ -107,7 +107,6 @@ def create_unit_dibeli(request):
                 
             # Only decrypt after verifying fields exist
             nominal = decrypt_and_verify(data.get("nominal"), data.get('signature'))
-            print(type(nominal))
 
             # Ensure Reksadana exists, catch Http404 and return 400 instead
             try:

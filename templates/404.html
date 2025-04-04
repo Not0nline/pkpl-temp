@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="container text-center">
+    <h1>404</h1>
+    <h2>Oops! Page Not Found</h2>
+    <p>The page you're looking for doesn't exist or has been moved.</p>
+    <a href="{% url 'dashboard:dashboard' %}" class="btn btn-primary">Go Back Home</a>
+</div>
+
+<style>
+    .container {
+        margin-top: 50px;
+    }
+    h1 {
+        font-size: 80px;
+        color: red;
+    }
+    h2 {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
