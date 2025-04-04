@@ -113,7 +113,8 @@ def create_unit_dibeli(request):
                 user_id=user_id,
                 id_reksadana=reksadana,
                 nominal=nominal,
-                waktu_pembelian = datetime.datetime.now()
+                waktu_pembelian = datetime.datetime.now(),
+                nav_dibeli = reksadana.nav
             )
 
             return JsonResponse({"message": "Unit dibeli created", "unit_id": unit.id}, status=201)
@@ -173,13 +174,20 @@ def delete_unit_dibeli_by_id(request):
         id_unitdibeli = data.get("id_unitdibeli")
         if not id_unitdibeli:
             return JsonResponse({"error": "id_unitdibeli is required"}, status=400)
-
         unitdibeli = get_object_or_404(UnitDibeli, id=id_unitdibeli)
+        total_beli = unitdibeli.nominal
+        nav_dulu = unitdibeli.nav_dibeli
+        id_rek =unitdibeli.id_reksadana
+        nav_sekarang = id_rek.nav
         if str(request.user_id) != str(unitdibeli.user_id):
             return JsonResponse({"error": "You are not authorized to delete this unit"}, status=403)
-
         unitdibeli.delete()
-        return JsonResponse({"message": "UnitDibeli deleted successfully"}, status=200)
+        return JsonResponse({"message": "UnitDibeli deleted successfully",
+                             'total_beli':total_beli,
+                             'nav_sekarang':nav_sekarang,
+                             'nav_dulu':nav_dulu, 
+                             },
+                             status=200)
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)

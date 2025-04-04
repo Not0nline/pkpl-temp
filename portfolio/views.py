@@ -69,6 +69,7 @@ def jual_unitdibeli(request):
         messages.error(request, "Unauthorized access")
         return redirect('auth_page:login')
 
+    print("AAAAAAAAAiuasad")
     if request.method != 'POST':
         messages.error(request, "Invalid request method")
         return redirect('portfolio:index')
@@ -76,6 +77,7 @@ def jual_unitdibeli(request):
     # Get the unit ID to sell
     id_unitdibeli = request.POST.get("id_unitdibeli")
     
+    print("masuk", id_unitdibeli)
     if not id_unitdibeli:
         messages.error(request, "Missing unit ID")
         return redirect('portfolio:index')
@@ -86,12 +88,15 @@ def jual_unitdibeli(request):
             "id_unitdibeli": id_unitdibeli
         }).encode('utf-8')
 
-        # Call delete function
         response = delete_unit_dibeli_by_id(request)
-
+        data = json.loads(response.content)
+        nav_dibeli = data.get('nav_dulu',1)
+        nav_sekarang = data.get('nav_sekarang',1)
+        total_beli = data.get('total_beli',1)
         # Check response status
-        if response.status_code == 201:
-            messages.success(request, "Successfully sold unit reksadana")
+        if response.status_code == 200:
+            print("Successfully sold unit reksadana seharga",nav_sekarang/nav_dibeli*total_beli)
+            messages.success(request, f"Successfully sold unit reksadana seharga {nav_sekarang/nav_dibeli*total_beli}")
         else:
             # Attempt to parse error message
             try:

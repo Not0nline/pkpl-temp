@@ -7,7 +7,6 @@ from django.test import TestCase
 from django.http import HttpRequest, JsonResponse
 from django.urls import reverse
 from django.contrib.auth.models import User
-from tibib.utils import encode_value
 from reksadana_rest.views import *
 from reksadana_rest.models import Reksadana, CategoryReksadana, Bank, UnitDibeli, HistoryReksadana
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
