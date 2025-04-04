@@ -39,7 +39,7 @@ def dashboard(request):
 
 # @csrf_exempt
 def beli_unit(request):
-    user_id = request.user_id
+    user_id = getattr(request, 'user_id', None) 
     if not user_id:
         return redirect('auth_page:login')
         
@@ -89,14 +89,15 @@ def beli_unit(request):
             })
     
     # GET request - redirect to dashboard
-    return redirect('auth_page:index')
+    return redirect('dashboard:dashboard')
 
 # async function call
 # @csrf_exempt
 def process_payment(request):
     if request.method == 'POST':
         try:
-            if not request.user_id:
+            user_id = getattr(request, 'user_id', None) 
+            if not user_id:
                 return JsonResponse({"error": "Unauthorized"}, status=401)
 
             if request.content_type == 'application/json':
