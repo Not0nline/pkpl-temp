@@ -39,6 +39,11 @@
                             <p><strong>AUM:</strong> Rp {{ item.aum|floatformat:2 }}</p>
                             <p><strong>Risk Level:</strong> {{ item.tingkat_resiko }}</p>
                             <p><strong>Description:</strong> {{ item.description|truncatewords:15 }}</p>
+                            
+                            <!-- Line Chart for Reksadana History -->
+                            <div class="chart-container">
+                                <canvas id="chart-{{ item.id_reksadana }}"></canvas>
+                            </div>
                         </div>
                         <div class="card-footer">
                             <form method="POST" action="{% url 'dashboard:beli_unit' %}">
@@ -63,6 +68,49 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+<script>
+    let ctx = 0;
+    let historyData = 0;
+    document.addEventListener("DOMContentLoaded", function () {
+        {% for item in reksadanas %}
+            ctx = document.getElementById("chart-{{ item.id_reksadana }}").getContext("2d");
+            
+            historyData = [
+                {% for history in item.history %}
+                { x: new Date("{{ history.date }}"), y: {{ history.nav }} },
+                {% endfor %}
+                ];
+            historyData = historyData.slice(-100);
+            console.log(historyData);
+
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    datasets: [{
+                        label: "NAV History",
+                        data: historyData,
+                        borderColor: "blue",
+                        fill: false,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: "time", time: { unit: "day" } },
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        {% endfor %}
+    });
+</script>
 
 <style>
 .dashboard-container {
@@ -90,6 +138,10 @@
 }
 .card-footer {
     background-color: #f8f9fa;
+}
+canvas {
+    width: 100%;
+    height: auto;
 }
 </style>
 {% endblock %}

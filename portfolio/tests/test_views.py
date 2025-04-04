@@ -106,6 +106,63 @@ class PortfolioViewTests(TestCase):
         response = index(request)
         
         self.assertEqual(response.status_code, 405)
+    
+    @patch('reksadana_rest.views.delete_unit_dibeli_by_id')
+    def test_jual_unitdibeli(self, mock_delete):
+        unit = UnitDibeli.objects.create(
+            user_id = "00000000-0000-0000-0000-000000000001",
+            id_reksadana = self.reksadana,
+            nominal = 10000,
+            waktu_pembelian = datetime.datetime.now()
+        )
+        mock = Mock()
+        mock.status_code = 200
+        mock_delete.return_value = mock
+
+        base_url = "http://localhost:8000/"
+        valid_data = {
+            'id_unitdibeli':1
+        }
+        headers = {
+            'Authorization': None,
+            'Content-Type': 'application/json'
+        }
+        request = MockRequest(method='POST', post_data=valid_data, user_id=1)
+        jual_unitdibeli(request)
+
+    @patch('reksadana_rest.views.delete_unit_dibeli_by_id')
+    def test_process_sell_success(self, mock_delete):
+        # Create test unit
+        unit = UnitDibeli.objects.create(
+            user_id="00000000-0000-0000-0000-000000000001",
+            id_reksadana=self.reksadana,
+            nominal=10000,
+            waktu_pembelian=datetime.datetime.now()
+        )
+        
+        # Setup mock response from delete function
+        mock_response = Mock()
+        mock_response.status_code = 201  # Note: Your process_sell checks for 201
+        mock_response.content = json.dumps({"message": "UnitDibeli deleted successfully"}).encode('utf-8')
+        mock_delete.return_value = mock_response
+        
+        # Create request
+        valid_data = {'id_unitdibeli': unit.id}
+        request = MockRequest(
+            method='POST',
+            body=json.dumps(valid_data),
+            post_data=valid_data,
+            user_id="00000000-0000-0000-0000-000000000001"  # Match the unit's user_id
+        )
+        
+        # Call the function
+        response = process_sell(request)
+        
+        # Assertions
+        self.assertEqual(response.status_code, 201)
+        response_data = json.loads(response.content)
+        self.assertEqual(response_data['message'], "Successfully sold unit reksadana")
+        mock_delete.assert_called_once()
 
     @patch('portfolio.views.delete_unit_dibeli_by_id')
     def test_jual_unitdibeli_success(self, mock_delete):

@@ -39,15 +39,12 @@ class Reksadana(models.Model):
     def generate_made_up_history_per_hour(self):
         history = HistoryReksadana.objects.filter(id_reksadana=self.id_reksadana).order_by('-date')
         if not history.exists():
-            # If no history, create the first entry
-            new_nav = randint(50, 150)
-            new_aum = randint(500, 1500)
 
             HistoryReksadana.objects.create(
                 id_reksadana=self,
                 date=datetime.datetime.now(),
-                nav=new_nav,
-                aum=new_aum
+                nav=self.nav,
+                aum=self.aum
             )
 
             return
@@ -66,7 +63,8 @@ class Reksadana(models.Model):
             current_time = timezone.make_aware(current_time, timezone.get_current_timezone())
         
         # Calculate how many hours have passed
-        hours_passed = int((current_time - last_date).total_seconds() // 3600)
+        hours_passed = int((current_time - last_date).total_seconds() //  3600)
+        print("hh",hours_passed)
 
         if hours_passed <= 0:
             return  # No new data needed
@@ -99,6 +97,10 @@ class Reksadana(models.Model):
                 aum=new_aum
             )
 
+            self.nav = new_nav
+            self.aum = new_aum
+            self.save()
+
             # Update last_nav and last_aum for next iteration
             last_nav = new_nav
             last_aum = new_aum
@@ -125,6 +127,7 @@ class UnitDibeli(models.Model):
                                      to_field="id_reksadana")
     nominal = models.IntegerField()
     waktu_pembelian = models.DateTimeField()
+    nav_dibeli = models.IntegerField()
 
     def clean(self):
         super().clean()

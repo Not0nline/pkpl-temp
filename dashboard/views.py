@@ -3,11 +3,12 @@ from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from reksadana_rest.views import get_all_reksadana, create_unit_dibeli
-from tibib.utils import encrypt_and_sign
+from reksadana_rest.views import get_all_reksadana, create_unit_dibeli, get_reksadana_history
+import os
+import base64
+from tibib.utils import *
 
 
-# Create your views here.
 def dashboard(request):
     # Check authentication using both request attributes and session
     user_id = getattr(request, 'user_id', None) 
@@ -22,11 +23,19 @@ def dashboard(request):
                 "error": "Failed to load reksadana data",
                 "user_name": request.user_username
             })
-            
-        # Parse response and render dashboard
+        
+        # Parse response
         data = json.loads(response.content)
         reksadanas = data.get('reksadanas', [])
         
+        # Fetch history for each reksadana
+        for reksadana in reksadanas:
+            history_response = get_reksadana_history(request, reksadana['id_reksadana'])
+            if history_response.status_code == 200:
+                reksadana['history'] = json.loads(history_response.content)
+            else:
+                reksadana['history'] = []
+
         return render(request, "dashboard.html", {
             "reksadanas": reksadanas,
             "user_name": request.user_username
