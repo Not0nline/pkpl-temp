@@ -1,4 +1,3 @@
-import sys
 from unittest.mock import patch, MagicMock
 from django.test import Client, RequestFactory, TestCase
 from django.http import HttpRequest
@@ -6,7 +5,7 @@ from django.conf import settings
 from django.urls import reverse
 import jwt
 import datetime
-from auth_page.views import home_view, login_view, logout_view, register_view
+from auth_page.views import login_view, logout_view, register_view
 from tibib.middleware import JWTAuthenticationMiddleware
 
 class TestJWTAuthenticationMiddleware(TestCase):
