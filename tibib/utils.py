@@ -59,6 +59,7 @@ def decrypt_and_verify(encrypted_message, signature):
 
         return decrypted_message
     except Exception as e:
+        print(e)
         print("Signature verification failed!", e)
 
 import re

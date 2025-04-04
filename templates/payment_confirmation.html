@@ -40,26 +40,22 @@
                         {{ user_id }}
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Card Number:</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ card_number }}
+                    </div>
+                </div>
             </div>
-            
-            <hr>
-            
-            <div class="payment-options">
-                <h4>Payment Method</h4>
+
+            <div class="submission">
                 <form method="POST" action="{% url 'dashboard:process_payment' %}">
                     {% csrf_token %}
                     <input type="hidden" name="id_reksadana" value="{{ reksadana_id }}">
                     <input type="hidden" name="nominal" value="{{ nominal|floatformat:0 }}">
                     <input type="hidden" name="user_id" value="{{ user_id }}">
-                    
-                    <div class="form-group mb-3">
-                        <select class="form-control" name="payment_method" required>
-                            <option value="">Select Payment Method</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="virtual_account">Virtual Account</option>
-                            <option value="e_wallet">E-Wallet</option>
-                        </select>
-                    </div>
                     
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">Confirm and Pay</button>
