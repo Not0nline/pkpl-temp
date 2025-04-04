@@ -4,7 +4,7 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from reksadana_rest.views import get_all_reksadana, create_unit_dibeli
-from tibib.utils import encrypt_and_sign
+from tibib.utils import encrypt_and_sign, sanitize_input
 
 
 # Create your views here.
@@ -39,7 +39,7 @@ def dashboard(request):
 
 # @csrf_exempt
 def beli_unit(request):
-    user_id = request.user_id
+    user_id = getattr(request, 'user_id', None) 
     if not user_id:
         return redirect('auth_page:login')
         
@@ -49,12 +49,12 @@ def beli_unit(request):
             if request.content_type == 'application/json':
                 # Handle JSON data (API calls)
                 data = json.loads(request.body)
-                reksadana_id = data.get("id_reksadana")
-                nominal = data.get("nominal")
+                reksadana_id = sanitize_input(data.get("id_reksadana"))
+                nominal = sanitize_input(data.get("nominal"), True)
             else:
                 # Handle form data (HTML form)
-                reksadana_id = request.POST.get("id_reksadana")
-                nominal = request.POST.get("nominal")
+                reksadana_id = sanitize_input(request.POST.get("id_reksadana"))
+                nominal = sanitize_input(request.POST.get("nominal"), True)
 
             # Validate required fields
             if not reksadana_id or not nominal:
@@ -63,18 +63,18 @@ def beli_unit(request):
                     "back_url": "/"
                 })
                 
-            try:
-                nominal = float(nominal)
-                if nominal < 10000:  # Minimum investment amount
-                    return render(request, "error.html", {
-                        "error": "Minimum investment amount is Rp 10,000",
-                        "back_url": "/"
-                    })
-            except ValueError:
+            # try:
+            nominal = float(nominal)
+            if nominal < 10000:  # Minimum investment amount
                 return render(request, "error.html", {
-                    "error": "Invalid amount format",
+                    "error": "Minimum investment amount is Rp 10,000",
                     "back_url": "/"
                 })
+            # except ValueError:
+            #     return render(request, "error.html", {
+            #         "error": "Invalid amount format",
+            #         "back_url": "/"
+            #     })
             
             # Process payment
             return render(request, "payment_confirmation.html", {
@@ -89,41 +89,44 @@ def beli_unit(request):
             })
     
     # GET request - redirect to dashboard
-    return redirect('auth_page:index')
+    return redirect('dashboard:dashboard')
 
 # async function call
 # @csrf_exempt
 def process_payment(request):
     if request.method == 'POST':
         try:
-            if not request.user_id:
+            user_id = getattr(request, 'user_id', None) 
+            if not user_id:
                 return JsonResponse({"error": "Unauthorized"}, status=401)
 
             if request.content_type == 'application/json':
                 data = json.loads(request.body)
             else:
                 data = {
-                    'user_id': request.session.get('user_id'),
-                    'id_reksadana': request.POST.get('id_reksadana'),
-                    'nominal': request.POST.get('nominal'),
-                    'payment_method': request.POST.get('payment_method'),
+                    'user_id': sanitize_input(request.session.get('user_id')),
+                    'id_reksadana': sanitize_input(request.POST.get('id_reksadana')),
+                    'nominal': sanitize_input(request.POST.get('nominal'), True),
+                    'payment_method': sanitize_input(request.POST.get('payment_method')),
                 }
 
             if not data.get('id_reksadana') or not data.get('nominal'):
                 return JsonResponse({"error": "Missing required fields"}, status=400)
             
-            try:
-                # Try to handle various formats including commas and currency symbols
-                nominal_str = str(data.get('nominal')).replace('Rp', '').replace(',', '').replace('.', '').strip()
-                nominal_int = int(nominal_str)
-            except ValueError as e:
-                print(f"Value error when converting nominal: {e}")
-                return render(request, "error.html", {
-                    "error": f"Invalid amount format: {data.get('nominal')}",
-                    "back_url": "/"
-                })
+            nominal_int = data.get('nominal')
             
+            # try:
+            #     # Try to handle various formats including commas and currency symbols
+            #     nominal_str = str(data.get('nominal')).replace('Rp', '').replace(',', '').replace('.', '').strip()
+            #     nominal_int = int(nominal_str)
+            # except ValueError as e:
+            #     print(f"Value error when converting nominal: {e}")
+            #     return render(request, "error.html", {
+            #         "error": f"Invalid amount format: {data.get('nominal')}",
+            #         "back_url": "/"
+            #     })
             
+        
             # Also prepare the JSON body for the API functions
             nominal_encrypted, signature = encrypt_and_sign(str(nominal_int))
             request._body = json.dumps({
