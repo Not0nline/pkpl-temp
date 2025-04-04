@@ -86,7 +86,7 @@ class TestRegisterView(TestCase):
         mock_post.return_value = mock_response
         data = {
             'phone_number': '1234567890',
-            'country_code': '+1',
+            'country_code': '1',
             'card_number': '1234 5678 9012 3456',
             'password': 'securepassword'
         }
@@ -99,24 +99,27 @@ class TestRegisterView(TestCase):
     def test_failed_registration(self, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = 400
+        mock_response.json.return_value = {
+            'error': 'Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character'
+        }
         mock_post.return_value = mock_response
         data = {
             'phone_number': '1234567890',
-            'country_code': '+1',
+            'country_code': '1',
             'card_number': '1234 5678 9012 3456',
             'password': 'securepassword'
         }
         request = self.factory.post(reverse('auth_page:register'), data)
         response = register_view(request)
         self.assertEqual(response.status_code, 200)  
-        self.assertContains(response, 'Registration failed. Please try again.')
+        self.assertContains(response, 'Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character')
 
     @patch('requests.post')
     def test_exception_during_registration(self, mock_post):
         mock_post.side_effect = Exception("API Error")
         data = {
             'phone_number': '1234567890',
-            'country_code': '+1',
+            'country_code': '1',
             'card_number': '1234 5678 9012 3456',
             'password': 'securepassword'
         }
@@ -141,7 +144,7 @@ class TestLoginView(TestCase):
         mock_response.json.return_value = {"Authorization": "Bearer valid.jwt.token"}  
         mock_post.return_value = mock_response
         data = {
-            'country_code': '+1',
+            'country_code': '1',
             'phone_number': '1234567890',
             'password': 'securepassword'
         }
@@ -158,7 +161,7 @@ class TestLoginView(TestCase):
         mock_response.status_code = 401
         mock_post.return_value = mock_response
         data = {
-            'country_code': '+1',
+            'country_code': '1',
             'phone_number': '1234567890',
             'password': 'wrongpassword'
         }
@@ -171,7 +174,7 @@ class TestLoginView(TestCase):
     def test_exception_during_login(self, mock_post):
         mock_post.side_effect = Exception("API Error")
         data = {
-            'country_code': '+1',
+            'country_code': '1',
             'phone_number': '1234567890',
             'password': 'securepassword'
         }
@@ -243,7 +246,13 @@ class TestLogoutView(TestCase):
         response = logout_view(request)
         self.assertEqual(response.status_code, 302) 
         self.assertEqual(response.url, reverse('auth_page:login'))
-        self.assertFalse('jwt_token' in response.cookies)  
+
+        self.assertIn('jwt_token', response.cookies)
+        jwt_cookie = response.cookies['jwt_token']
+        
+        # Check cookie is marked for deletion
+        self.assertEqual(jwt_cookie.value, '')
+
     def test_logout_when_not_logged_in(self):
         request = self.factory.get(reverse('auth_page:logout'))
         response = logout_view(request)
