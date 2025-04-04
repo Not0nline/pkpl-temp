@@ -6,12 +6,15 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from reksadana_rest.views import get_units_by_user, delete_unit_dibeli_by_id
-from tibib.utils import sanitize_input
+from tibib.utils import sanitize_input, handle_error
 
 def index(request):
     """
     Handle portfolio index page rendering
     """
+    if request.user_role != 'user':
+        return handle_error(request, 403, "Forbidden: You don't have permission to access this page")
+    
     if request.method != 'GET':
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
@@ -47,6 +50,7 @@ def index(request):
         return render(request, 'portfolio.html', context={
             "units": data,
             "success_message": success_message,
+            'user_role':request.user_role
         })
     
     except json.JSONDecodeError:
@@ -64,6 +68,9 @@ def jual_unitdibeli(request):
     """
     Process selling a unit
     """
+    if request.user_role != 'user':
+        return handle_error(request, 403, "Forbidden: You don't have permission to access this page")
+    
     # Ensure user is authenticated
     if not request.user_id:
         messages.error(request, "Unauthorized access")
@@ -77,7 +84,6 @@ def jual_unitdibeli(request):
     # Get the unit ID to sell
     id_unitdibeli = sanitize_input(request.POST.get("id_unitdibeli"))
     
-    print("masuk", id_unitdibeli)
     if not id_unitdibeli:
         messages.error(request, "Missing unit ID")
         return redirect('portfolio:index')
@@ -114,6 +120,9 @@ def process_sell(request):
     """
     Validate and process the sell request
     """
+    if request.user_role != 'user':
+        return handle_error(request, 403, "Forbidden: You don't have permission to access this page")
+    
     # Ensure user is authenticated
     if not request.user_id:
         return JsonResponse({"error": "Unauthorized"}, status=401)
