@@ -9,6 +9,7 @@ __pycache__/
 *.pyo
 */migrations/*
 /.env
+.env
 
 db.sqlite3
 /.coverage
