@@ -206,49 +206,49 @@ def get_all_banks(request):
         print(f"Error getting banks: {str(e)}")
         return []
 
-def create_reksadana_api(request):
-    """
-    Create a new Reksadana from form data (not JSON)
-    """
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
+# def create_reksadana_api(request):
+#     """
+#     Create a new Reksadana from form data (not JSON)
+#     """
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
-    try:
-        # Extract form data
-        name = request.POST.get('name')
-        description = request.POST.get('description')
-        initial_value = request.POST.get('initial_value')
-        category_id = request.POST.get('category_id')
-        kustodian_id = request.POST.get('kustodian_id')
-        penampung_id = request.POST.get('penampung_id')
+#     try:
+#         # Extract form data
+#         name = request.POST.get('name')
+#         description = request.POST.get('description')
+#         initial_value = request.POST.get('initial_value')
+#         category_id = request.POST.get('category_id')
+#         kustodian_id = request.POST.get('kustodian_id')
+#         penampung_id = request.POST.get('penampung_id')
         
-        # Validate form data
-        if not all([name, description, initial_value, category_id, kustodian_id, penampung_id]):
-            return JsonResponse({'error': 'All fields are required'}, status=400)
+#         # Validate form data
+#         if not all([name, description, initial_value, category_id, kustodian_id, penampung_id]):
+#             return JsonResponse({'error': 'All fields are required'}, status=400)
         
-        # Validate foreign keys
-        try:
-            category = CategoryReksadana.objects.get(id=category_id)
-            kustodian = Bank.objects.get(id=kustodian_id)
-            penampung = Bank.objects.get(id=penampung_id)
-        except Exception as e:
-            return JsonResponse({'error': f'Invalid selection: {str(e)}'}, status=400)
+#         # Validate foreign keys
+#         try:
+#             category = CategoryReksadana.objects.get(id=category_id)
+#             kustodian = Bank.objects.get(id=kustodian_id)
+#             penampung = Bank.objects.get(id=penampung_id)
+#         except Exception as e:
+#             return JsonResponse({'error': f'Invalid selection: {str(e)}'}, status=400)
         
-        # Create new Reksadana entry
-        reksadana = Reksadana.objects.create(
-            name=name,
-            description=description,
-            nav=float(initial_value),
-            aum=0,  # Initial AUM is 0
-            tingkat_resiko="Konservatif",  # Default risk level
-            category=category,
-            kustodian=kustodian,
-            penampung=penampung
-        )
+#         # Create new Reksadana entry
+#         reksadana = Reksadana.objects.create(
+#             name=name,
+#             description=description,
+#             nav=float(initial_value),
+#             aum=0,  # Initial AUM is 0
+#             tingkat_resiko="Konservatif",  # Default risk level
+#             category=category,
+#             kustodian=kustodian,
+#             penampung=penampung
+#         )
         
-        return JsonResponse({'success': 'Reksadana created successfully', 'id': reksadana.id}, status=201)
+#         return JsonResponse({'success': 'Reksadana created successfully', 'id': reksadana.id}, status=201)
     
-    except Exception as e:
-        return JsonResponse({'error': f'Error creating Reksadana: {str(e)}'}, status=500)
+#     except Exception as e:
+#         return JsonResponse({'error': f'Error creating Reksadana: {str(e)}'}, status=500)
     
     
