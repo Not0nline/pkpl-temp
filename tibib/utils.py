@@ -2,6 +2,7 @@ import base64
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
 from django.conf import settings
+import re
 
 
 def encrypt_and_sign(message):
@@ -59,3 +60,26 @@ def decrypt_and_verify(encrypted_message, signature):
         return decrypted_message
     except Exception as e:
         print("Signature verification failed!", e)
+
+import re
+
+def sanitize_input(value, digits_only=False):
+    """
+    Sanitize input with optional digits-only enforcement
+    
+    Args:
+        value: Input value to sanitize
+        digits_only: If True, only allow digits (0-9)
+    
+    Returns:
+        Sanitized string or None if value was None/empty
+    """
+    if not value:
+        return value
+        
+    if digits_only:
+        # Remove all non-digit characters
+        return re.sub(r'[^\d]', '', value)
+    else:
+        # Default sanitization - remove dangerous characters
+        return re.sub(r'[<>"\'%;()&+]', '', value).strip()

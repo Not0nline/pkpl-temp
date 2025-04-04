@@ -3,18 +3,18 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import *
 import json
-from tibib.utils import decrypt_and_verify
+from tibib.utils import decrypt_and_verify, sanitize_input
 
 # @csrf_exempt  # Remove this if CSRF protection is handled properly
 def create_reksadana(request):
     try:
         # Extract form data
-        name = request.POST.get('name')
-        initial_value = request.POST.get('nav')
-        category_id = request.POST.get('category_id')
-        kustodian_id = request.POST.get('kustodian_id')
-        penampung_id = request.POST.get('penampung_id')
-        risk_level = request.POST.get('tingkat_resiko')
+        name = sanitize_input(request.POST.get('name'))
+        initial_value = sanitize_input(request.POST.get('nav'), True)
+        category_id = sanitize_input(request.POST.get('category_id'))
+        kustodian_id = sanitize_input(request.POST.get('kustodian_id'))
+        penampung_id = sanitize_input(request.POST.get('penampung_id'))
+        risk_level = sanitize_input(request.POST.get('tingkat_resiko'))
 
         print(name, initial_value, category_id, kustodian_id, penampung_id, risk_level)
         
@@ -52,12 +52,13 @@ def create_reksadana(request):
 def edit_reksadana(request):
     try:
         # Extract form data
-        id_reksadana = request.POST.get('reksadana_id')
-        name = request.POST.get('name')
-        category_id = request.POST.get('category_id')
-        kustodian_id = request.POST.get('kustodian_id')
-        penampung_id = request.POST.get('penampung_id')
-        risk_level = request.POST.get('tingkat_resiko')
+        id_reksadana = sanitize_input(request.POST.get('reksadana_id'))
+        name = sanitize_input(request.POST.get('name'))
+        category_id = sanitize_input(request.POST.get('category_id'))
+        kustodian_id = sanitize_input(request.POST.get('kustodian_id'))
+        penampung_id = sanitize_input(request.POST.get('penampung_id'))
+        risk_level = sanitize_input(request.POST.get('tingkat_resiko'))
+
         # Validate form data
         if not all([id_reksadana, name, category_id, kustodian_id, penampung_id, risk_level]):
             return JsonResponse({'error': 'All fields are required'}, status=400)
@@ -99,7 +100,7 @@ def create_unit_dibeli(request):
         try:
             user_id = request.user_id
             data = json.loads(request.body)
-            id_reksadana = data.get("id_reksadana")
+            id_reksadana = sanitize_input(data.get("id_reksadana"))
             nominal = decrypt_and_verify(data.get("nominal"), data.get('signature'))
             print(type(nominal))
 
@@ -139,6 +140,7 @@ def get_units_by_user(request):
 
 def get_reksadana_history(request, id_reksadana):
     if request.method == "GET":
+        id_reksadana = sanitize_input(id_reksadana)
         reksadana = Reksadana.objects.get(id_reksadana=id_reksadana)
         reksadana.generate_made_up_history_per_hour()
         return JsonResponse(list(HistoryReksadana.objects.filter(id_reksadana=reksadana).values()), safe=False)
@@ -170,7 +172,7 @@ def delete_unit_dibeli_by_id(request):
 
     try:
         data = json.loads(request.body)
-        id_unitdibeli = data.get("id_unitdibeli")
+        id_unitdibeli = sanitize_input(data.get("id_unitdibeli"))
         if not id_unitdibeli:
             return JsonResponse({"error": "id_unitdibeli is required"}, status=400)
 
@@ -215,12 +217,12 @@ def create_reksadana_api(request):
     
     try:
         # Extract form data
-        name = request.POST.get('name')
-        description = request.POST.get('description')
-        initial_value = request.POST.get('initial_value')
-        category_id = request.POST.get('category_id')
-        kustodian_id = request.POST.get('kustodian_id')
-        penampung_id = request.POST.get('penampung_id')
+        name = sanitize_input(request.POST.get('name'))
+        description = sanitize_input(request.POST.get('description'))
+        initial_value = sanitize_input(request.POST.get('initial_value'), True)
+        category_id = sanitize_input(request.POST.get('category_id'))
+        kustodian_id = sanitize_input(request.POST.get('kustodian_id'))
+        penampung_id = sanitize_input(request.POST.get('penampung_id'))
         
         # Validate form data
         if not all([name, description, initial_value, category_id, kustodian_id, penampung_id]):

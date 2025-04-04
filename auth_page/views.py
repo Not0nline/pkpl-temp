@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import os
 import requests
-import jwt
+from tibib.utils import sanitize_input
 
 API_BASE_URL = os.environ.get('API_BASE_URL')
 
@@ -18,10 +18,10 @@ def register_view(request):
             
             # Prepare data for API
             payload = {
-                "phone_number": phone_number,
-                "country_code": country_code,
-                "card_number": card_number,
-                "password": password
+                "phone_number": sanitize_input(phone_number),
+                "country_code": sanitize_input(country_code),
+                "card_number": sanitize_input(card_number),
+                "password": sanitize_input(password)
             }
             
             # Make API request
@@ -33,7 +33,7 @@ def register_view(request):
                 return redirect('auth_page:login')
             else:
                 return render(request, 'register.html', {
-                    'error': 'Registration failed. Please try again.'
+                    'error': response.json().get('error', 'Registration failed. Please try again.')
                 })
         except Exception as e:
             return render(request, 'register.html', {
@@ -52,7 +52,7 @@ def login_view(request):
             
             # Prepare data for API
             payload = {
-                "full_phone": full_phone,
+                "full_phone": sanitize_input(full_phone),
                 "password": password
             }
             
