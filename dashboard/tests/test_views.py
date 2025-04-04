@@ -215,25 +215,6 @@ class TestBeliUnit(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Minimum investment amount is Rp 10,000", response.content)
 
-    def test_beli_unit_post_value_error(self):
-        """
-        If the nominal cannot be converted to float, 
-        we render 'error.html' with the 'Invalid amount format' message.
-        """
-        form_data = {
-            "id_reksadana": "123",
-            "nominal": "abc"  # Not a float
-        }
-        request = self.factory.post(
-            self.url,
-            data=form_data
-        )
-        request.user_id = 1
-        response = beli_unit(request)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Invalid amount format", response.content)
-
     def test_beli_unit_post_success(self):
         """
         A successful POST request with valid fields 
@@ -389,24 +370,6 @@ class TestProcessPayment(TestCase):
         response = process_payment(request)
         self.assertEqual(response.status_code, 400)
         self.assertJSONEqual(response.content, {"error": "Missing required fields"})
-
-    def test_process_payment_post_value_error(self):
-        """
-        When 'nominal' cannot be converted to int, the view should render error.html.
-        """
-        data = {
-            "id_reksadana": "123",
-            "nominal": "abc"  # Invalid numeric format.
-        }
-        request = self.factory.post(
-            self.url,
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        request.user_id = 1
-        response = process_payment(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Invalid amount format: abc", response.content)
 
     @patch('dashboard.views.create_unit_dibeli')
     @patch('dashboard.views.encrypt_and_sign')

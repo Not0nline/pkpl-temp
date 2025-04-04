@@ -63,18 +63,18 @@ def beli_unit(request):
                     "back_url": "/"
                 })
                 
-            try:
-                nominal = float(nominal)
-                if nominal < 10000:  # Minimum investment amount
-                    return render(request, "error.html", {
-                        "error": "Minimum investment amount is Rp 10,000",
-                        "back_url": "/"
-                    })
-            except ValueError:
+            # try:
+            nominal = float(nominal)
+            if nominal < 10000:  # Minimum investment amount
                 return render(request, "error.html", {
-                    "error": "Invalid amount format",
+                    "error": "Minimum investment amount is Rp 10,000",
                     "back_url": "/"
                 })
+            # except ValueError:
+            #     return render(request, "error.html", {
+            #         "error": "Invalid amount format",
+            #         "back_url": "/"
+            #     })
             
             # Process payment
             return render(request, "payment_confirmation.html", {
@@ -113,18 +113,20 @@ def process_payment(request):
             if not data.get('id_reksadana') or not data.get('nominal'):
                 return JsonResponse({"error": "Missing required fields"}, status=400)
             
-            try:
-                # Try to handle various formats including commas and currency symbols
-                nominal_str = str(data.get('nominal')).replace('Rp', '').replace(',', '').replace('.', '').strip()
-                nominal_int = int(nominal_str)
-            except ValueError as e:
-                print(f"Value error when converting nominal: {e}")
-                return render(request, "error.html", {
-                    "error": f"Invalid amount format: {data.get('nominal')}",
-                    "back_url": "/"
-                })
+            nominal_int = data.get('nominal')
             
+            # try:
+            #     # Try to handle various formats including commas and currency symbols
+            #     nominal_str = str(data.get('nominal')).replace('Rp', '').replace(',', '').replace('.', '').strip()
+            #     nominal_int = int(nominal_str)
+            # except ValueError as e:
+            #     print(f"Value error when converting nominal: {e}")
+            #     return render(request, "error.html", {
+            #         "error": f"Invalid amount format: {data.get('nominal')}",
+            #         "back_url": "/"
+            #     })
             
+        
             # Also prepare the JSON body for the API functions
             nominal_encrypted, signature = encrypt_and_sign(str(nominal_int))
             request._body = json.dumps({
