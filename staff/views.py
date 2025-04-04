@@ -2,6 +2,7 @@ from django.shortcuts import redirect, render
 from reksadana_rest.models import Reksadana
 from reksadana_rest.views import create_reksadana, edit_reksadana, get_all_categories, get_all_banks, fetch_all_reksadanas
 import json
+from django.core.exceptions import ValidationError
 from tibib.utils import handle_error
 
 def show_dashboard(request):
@@ -33,7 +34,7 @@ def create_reksadana_staff(request):
                 request,
                 create_response.status_code,
                 error_data.get('error', 'Failed to create investment product'),
-                back_url='/staff/create/'
+                back_url='/staff/create_reksadana/'
             )
             
         except json.JSONDecodeError:
@@ -64,7 +65,7 @@ def edit_reksadana_staff(request):
         reksadana = Reksadana.objects.get(id_reksadana=reksadana_id)
     except Reksadana.DoesNotExist:
         return handle_error(request, 404, "Investment product not found")
-    except ValueError:
+    except ValidationError:
         return handle_error(request, 400, "Invalid product ID format")
     
     if request.method == 'POST':
@@ -78,7 +79,7 @@ def edit_reksadana_staff(request):
                 request,
                 edit_response.status_code,
                 error_data.get('error', 'Failed to update investment product'),
-                back_url=f'/staff/edit/?reksadana_id={reksadana_id}'
+                back_url=f'/staff/edit_reksadana/?reksadana_id={reksadana_id}'
             )
             
         except json.JSONDecodeError:
