@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from reksadana_rest.views import get_units_by_user, delete_unit_dibeli_by_id
-from django.views.decorators.csrf import csrf_exempt
+from tibib.utils import sanitize_input
 
 def index(request):
     """
@@ -74,7 +74,7 @@ def jual_unitdibeli(request):
         return redirect('portfolio:index')
 
     # Get the unit ID to sell
-    id_unitdibeli = request.POST.get("id_unitdibeli")
+    id_unitdibeli = sanitize_input(request.POST.get("id_unitdibeli"))
     
     if not id_unitdibeli:
         messages.error(request, "Missing unit ID")
@@ -120,7 +120,7 @@ def process_sell(request):
         # Parse request body
         try:
             request_body = json.loads(request.body.decode('utf-8'))
-            id_unitdibeli = request_body.get('id_unitdibeli')
+            id_unitdibeli = sanitize_input(request_body.get('id_unitdibeli'))
         except (json.JSONDecodeError, UnicodeDecodeError):
             return JsonResponse({"error": "Invalid request body"}, status=400)
 

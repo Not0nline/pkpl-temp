@@ -4,7 +4,7 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from reksadana_rest.views import get_all_reksadana, create_unit_dibeli
-from tibib.utils import encrypt_and_sign
+from tibib.utils import encrypt_and_sign, sanitize_input
 
 
 # Create your views here.
@@ -49,12 +49,12 @@ def beli_unit(request):
             if request.content_type == 'application/json':
                 # Handle JSON data (API calls)
                 data = json.loads(request.body)
-                reksadana_id = data.get("id_reksadana")
-                nominal = data.get("nominal")
+                reksadana_id = sanitize_input(data.get("id_reksadana"))
+                nominal = sanitize_input(data.get("nominal"), True)
             else:
                 # Handle form data (HTML form)
-                reksadana_id = request.POST.get("id_reksadana")
-                nominal = request.POST.get("nominal")
+                reksadana_id = sanitize_input(request.POST.get("id_reksadana"))
+                nominal = sanitize_input(request.POST.get("nominal"), True)
 
             # Validate required fields
             if not reksadana_id or not nominal:
@@ -104,10 +104,10 @@ def process_payment(request):
                 data = json.loads(request.body)
             else:
                 data = {
-                    'user_id': request.session.get('user_id'),
-                    'id_reksadana': request.POST.get('id_reksadana'),
-                    'nominal': request.POST.get('nominal'),
-                    'payment_method': request.POST.get('payment_method'),
+                    'user_id': sanitize_input(request.session.get('user_id')),
+                    'id_reksadana': sanitize_input(request.POST.get('id_reksadana')),
+                    'nominal': sanitize_input(request.POST.get('nominal'), True),
+                    'payment_method': sanitize_input(request.POST.get('payment_method')),
                 }
 
             if not data.get('id_reksadana') or not data.get('nominal'):
