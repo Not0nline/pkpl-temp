@@ -27,7 +27,7 @@ class JWTAuthenticationMiddleware:
         auth_cookie = request.COOKIES.get("jwt_token")
 
         if not auth_cookie and not auth_header:
-            return JsonResponse({"error": "Authorization header missing"}, status=401)
+            return redirect('auth_page:login')
 
         # dari postman
         if auth_header and auth_header.startswith("Bearer "):

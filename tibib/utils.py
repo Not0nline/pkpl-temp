@@ -74,7 +74,7 @@ def sanitize_input(value, digits_only=False):
     Returns:
         Sanitized string or None if value was None/empty
     """
-    if not value:
+    if not value or type(value) is not str:
         return value
         
     if digits_only:
