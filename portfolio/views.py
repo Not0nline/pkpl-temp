@@ -5,8 +5,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from reksadana_rest.views import get_units_by_user, delete_unit_dibeli_by_id
-from tibib.utils import sanitize_input, handle_error
+from reksadana_rest.views import get_units_by_user, delete_unit_dibeli_by_id, get_unit_dibeli_by_id
+from tibib.utils import sanitize_input, handle_error, decrypt_and_verify
 
 def index(request):
     """
@@ -88,27 +88,69 @@ def jual_unitdibeli(request):
         return redirect('portfolio:index')
 
     try:
-        # Prepare request body
-        request._body = json.dumps({
-            "id_unitdibeli": id_unitdibeli
-        }).encode('utf-8')
+        # get user's credit card
+        response = requests.post(f"{settings.API_BASE_URL}/get-card/", 
+                                headers={'Authorization': request.COOKIES.get('jwt_token')})
 
-        response = delete_unit_dibeli_by_id(request)
-        data = json.loads(response.content)
+        if response.status_code != 200:
+            return render(request, "error.html", {
+                "error": "Failed to retrieve card information",
+                "back_url": "/"
+            })
+        
+        card_data = response.json()
+        decrypt_and_verify(card_data['credit_card'], card_data['signature'])
+
+        res = get_unit_dibeli_by_id(request, id_unitdibeli)
+        if response.status_code != 200:
+            error_data = json.loads(response.content.decode('utf-8'))
+            return render(request, "error.html", {
+                "error": f"Selling units failed: {error_data.get('error', 'Unknown error')}",
+                "back_url": "/"
+            })
+
+        data = json.loads(res.content.decode('utf-8'))  # Convert response to dictionary
         nav_dibeli = data.get('nav_dulu',1)
         nav_sekarang = data.get('nav_sekarang',1)
         total_beli = data.get('total_beli',1)
-        # Check response status
-        if response.status_code == 200:
-            print("Successfully sold unit reksadana seharga",nav_sekarang/nav_dibeli*total_beli)
-            messages.success(request, f"Successfully sold unit reksadana seharga {nav_sekarang/nav_dibeli*total_beli}")
+        card_data['amount'] = nav_dibeli/nav_sekarang*total_beli  
+        
+        # Make API request
+        response = requests.post(f"{settings.API_URL}/reksadana/payment-gateway/", 
+                                json=card_data, 
+                                headers={'Content-Type': 'application/json', 'Authorization': request.COOKIES.get('jwt_token')})
+
+        if response.status_code != 200:
+            error_data = json.loads(response.content.decode('utf-8'))
+            return render(request, "error.html", {
+                "error": f"Payment failed: {error_data.get('error', 'Unknown error')}",
+                "back_url": "/"
+            })
+        
         else:
-            # Attempt to parse error message
-            try:
-                error_data = json.loads(response.content.decode('utf-8')) 
-                messages.error(request, error_data.get('error', 'Failed to sell unit')) 
-            except (json.JSONDecodeError, UnicodeDecodeError): 
-                messages.error(request, 'Failed to sell unit') 
+            data = response.json()  # Convert response to dictionary
+
+            # Prepare request body
+            request._body = json.dumps({
+                "id_unitdibeli": id_unitdibeli
+            }).encode('utf-8')
+
+            response = delete_unit_dibeli_by_id(request)
+            data = json.loads(response.content)
+            nav_dibeli = data.get('nav_dulu',1)
+            nav_sekarang = data.get('nav_sekarang',1)
+            total_beli = data.get('total_beli',1)
+            # Check response status
+            if response.status_code == 200:
+                print("Successfully sold unit reksadana seharga",nav_sekarang/nav_dibeli*total_beli)
+                messages.success(request, f"Successfully sold unit reksadana seharga {nav_sekarang/nav_dibeli*total_beli}")
+            else:
+                # Attempt to parse error message
+                try:
+                    error_data = json.loads(response.content.decode('utf-8')) 
+                    messages.error(request, error_data.get('error', 'Failed to sell unit')) 
+                except (json.JSONDecodeError, UnicodeDecodeError): 
+                    messages.error(request, 'Failed to sell unit') 
 
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")

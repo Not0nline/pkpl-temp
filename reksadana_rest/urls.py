@@ -11,4 +11,5 @@ urlpatterns = [
     path('get-reksadana-history/<uuid:id_reksadana>/', get_reksadana_history, name="get_reksadana_history"),
     path('edit-reksadana/', edit_reksadana, name="edit_reksadana"),
     path('payment-gateway/', check_payment_gateway_status, name="payment_gateway"),
+    path('get-unitdibeli/<uuid:id_unitdibeli>/', get_unit_dibeli_by_id, name="get_unit_dibeli"),
 ]

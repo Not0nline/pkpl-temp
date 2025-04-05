@@ -201,6 +201,24 @@ def get_all_banks(request):
     except Exception as e:
         print(f"Error getting banks: {str(e)}")
         return []
+    
+def get_unit_dibeli_by_id(request, id_unitdibeli):
+    if request.method == "GET":
+        id_unitdibeli = sanitize_input(id_unitdibeli)
+        if not id_unitdibeli:
+            return JsonResponse({"error": "id_unitdibeli is required"}, status=400)
+        
+        unitdibeli = get_object_or_404(UnitDibeli, id=id_unitdibeli)
+        total_beli = unitdibeli.nominal
+        nav_dulu = unitdibeli.nav_dibeli
+        id_rek = unitdibeli.id_reksadana
+        nav_sekarang = id_rek.nav
+
+        return JsonResponse({'total_beli':total_beli,
+                             'nav_sekarang':nav_sekarang,
+                             'nav_dulu':nav_dulu, 
+                             }, status=200)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 @csrf_exempt
 def check_payment_gateway_status(request):
