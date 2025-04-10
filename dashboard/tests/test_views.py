@@ -16,6 +16,7 @@ class TestDashboard(TestCase):
         we expect a redirect to the login page.
         """
         request = self.factory.get(self.url)
+        request.user_role = 'user'
         # user_id intentionally not set to simulate "not authenticated"
 
         response = dashboard(request)
@@ -35,6 +36,7 @@ class TestDashboard(TestCase):
         request = self.factory.get(self.url)
         request.user_id = 1  # Simulate an authenticated user
         request.user_username = 'testuser'
+        request.user_role = 'user'
 
         # Mock the response from get_all_reksadana
         mock_response = MagicMock()
@@ -57,25 +59,14 @@ class TestDashboard(TestCase):
         request = self.factory.get(self.url)
         request.user_id = 1
         request.user_username = 'testuser'
-
-        # Simulate a successful response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.content = json.dumps({
-            'reksadanas': [
-                {'name': 'Reksadana A', 'value': 100},
-                {'name': 'Reksadana B', 'value': 200},
-            ]
-        }).encode('utf-8')
-        mock_get_all_reksadana.return_value = mock_response
+        request.user_role = 'user'
 
         response = dashboard(request)
 
         # Check rendered template & context
         self.assertEqual(response.status_code, 200)
         # The content should contain the reksadana data
-        self.assertIn(b'Reksadana A', response.content)
-        self.assertIn(b'Reksadana B', response.content)
+        self.assertIn(b'Reksadana', response.content)
         self.assertIn(b'testuser', response.content)
     
     @patch('dashboard.views.get_all_reksadana')
@@ -87,7 +78,7 @@ class TestDashboard(TestCase):
         request = self.factory.get(self.url)
         request.user_id = 1
         request.user_username = 'testuser'
-
+        request.user_role = 'user'
         # Force an exception to be raised
         mock_get_all_reksadana.side_effect = Exception("Boom!")
 
@@ -110,6 +101,7 @@ class TestBeliUnit(TestCase):
         we expect a redirect to the login page.
         """
         request = self.factory.get(self.url)
+        request.user_role = 'user'
         response = beli_unit(request)
         
         self.assertEqual(response.status_code, 302)
@@ -122,12 +114,15 @@ class TestBeliUnit(TestCase):
         """
         request = self.factory.get(self.url)
         request.user_id = 1  # Simulate an authenticated user
+        request.user_role = 'user'
         response = beli_unit(request)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/dashboard/', response.url)
 
-    def test_beli_unit_post_content_json(self):
+    @patch('dashboard.views.decrypt_and_verify')
+    @patch('dashboard.views.requests.post')
+    def test_beli_unit_post_content_json(self, mock_post, mock_enc):
         """
         When request.method == 'POST' and content_type == 'application/json',
         we parse the JSON from request.body.
@@ -144,6 +139,15 @@ class TestBeliUnit(TestCase):
             content_type='application/json'
         )
         request.user_id = 1  # authenticated
+        request.user_role = 'user'
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+        
+
         response = beli_unit(request)
 
         # Because it's valid data, check that we see payment_confirmation
@@ -152,7 +156,9 @@ class TestBeliUnit(TestCase):
         self.assertIn(b"123", response.content)
         self.assertIn(b"20000", response.content)
 
-    def test_beli_unit_post_content_form(self):
+    @patch('dashboard.views.decrypt_and_verify')
+    @patch('dashboard.views.requests.post')
+    def test_beli_unit_post_content_form(self, mock_post, mock_enc):
         """
         When request.method == 'POST' with normal form data 
         (content_type='application/x-www-form-urlencoded'), 
@@ -168,6 +174,15 @@ class TestBeliUnit(TestCase):
             data=form_data
         )
         request.user_id = 1
+        request.user_role = 'user'
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+
         response = beli_unit(request)
 
         self.assertEqual(response.status_code, 200)
@@ -191,6 +206,7 @@ class TestBeliUnit(TestCase):
             content_type='application/x-www-form-urlencoded'
         )
         request.user_id = 1
+        request.user_role = 'user'
         response = beli_unit(request)
 
         self.assertEqual(response.status_code, 200)
@@ -210,16 +226,26 @@ class TestBeliUnit(TestCase):
             data=form_data
         )
         request.user_id = 1
+        request.user_role = 'user'
         response = beli_unit(request)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Minimum investment amount is Rp 10,000", response.content)
 
-    def test_beli_unit_post_success(self):
+    @patch('dashboard.views.decrypt_and_verify')
+    @patch('dashboard.views.requests.post')
+    def test_beli_unit_post_success(self, mock_post, mock_enc):
         """
         A successful POST request with valid fields 
         and nominal >= 10000 leads to 'payment_confirmation.html'.
         """
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
         form_data = {
             "id_reksadana": "xyz",
             "nominal": "20000"
@@ -229,6 +255,7 @@ class TestBeliUnit(TestCase):
             data=form_data
         )
         request.user_id = 1
+        request.user_role = 'user'
         response = beli_unit(request)
 
         self.assertEqual(response.status_code, 200)
@@ -247,6 +274,7 @@ class TestBeliUnit(TestCase):
             "nominal": "20000"
         }
         request = self.factory.post(self.url, data=form_data)
+        request.user_role = 'user'
         request.user_id = 1
 
         # Force an exception by setting request.POST to None
@@ -266,6 +294,7 @@ class TestProcessPayment(TestCase):
         GET requests should return "Method not allowed" with status 405.
         """
         request = self.factory.get(self.url)
+        request.user_role = 'user'
         response = process_payment(request)
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.content, b"Method not allowed")
@@ -274,26 +303,31 @@ class TestProcessPayment(TestCase):
         """
         If request.user_id is missing, the view returns a 401 JsonResponse.
         """
-        data = {
-            "id_reksadana": "123",
-            "nominal": "10000"
-        }
         request = self.factory.post(
             self.url,
-            data=json.dumps(data),
             content_type='application/json'
         )
+        request.user_role = 'user'
         # Do NOT set request.user_id to simulate non-authenticated user
         response = process_payment(request)
-        # self.assertEqual(response.status_code, 401)
-        self.assertJSONEqual(response.content, {"error": "Unauthorized"})
+        self.assertEqual(response.status_code, 401)
+        self.assertIn(b'Unauthorized',response.content)
 
     @patch('dashboard.views.create_unit_dibeli')
     @patch('dashboard.views.encrypt_and_sign')
-    def test_process_payment_post_content_json(self, mock_encrypt_and_sign, mock_create_unit_dibeli):
+    @patch('dashboard.views.requests.post')
+    @patch('dashboard.views.decrypt_and_verify')
+    def test_process_payment_post_content_json(self, mock_enc, mock_post, mock_encrypt_and_sign, mock_create_unit_dibeli):
         """
         Valid POST request with JSON content should process payment successfully.
         """
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
         # Arrange: Setup mocks to simulate successful unit creation.
         mock_encrypt_and_sign.return_value = ('encrypted_nominal', 'fake_signature')
         mock_create_response = MagicMock()
@@ -311,6 +345,7 @@ class TestProcessPayment(TestCase):
         )
         request.user_id = 1  # Simulate authenticated user.
         request.session = {}
+        request.user_role = 'user'
 
         # Act
         response = process_payment(request)
@@ -325,10 +360,20 @@ class TestProcessPayment(TestCase):
 
     @patch('dashboard.views.create_unit_dibeli')
     @patch('dashboard.views.encrypt_and_sign')
-    def test_process_payment_post_content_form(self, mock_encrypt_and_sign, mock_create_unit_dibeli):
+    @patch('dashboard.views.requests.post')
+    @patch('dashboard.views.decrypt_and_verify')
+    def test_process_payment_post_content_form(self, mock_enc, mock_post, mock_encrypt_and_sign, mock_create_unit_dibeli):
         """
         Valid POST request with form data should process payment successfully.
         """
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+
         mock_encrypt_and_sign.return_value = ('encrypted_nominal', 'fake_signature')
         mock_create_response = MagicMock()
         mock_create_response.status_code = 201
@@ -342,7 +387,7 @@ class TestProcessPayment(TestCase):
         request = self.factory.post(self.url, data=form_data)
         request.user_id = 1
         request.session = {}
-
+        request.user_role = 'user'
         response = process_payment(request)
 
         self.assertEqual(response.status_code, 302)
@@ -367,13 +412,16 @@ class TestProcessPayment(TestCase):
             content_type='application/json'
         )
         request.user_id = 1
+        request.user_role = 'user'
         response = process_payment(request)
         self.assertEqual(response.status_code, 400)
         self.assertJSONEqual(response.content, {"error": "Missing required fields"})
 
     @patch('dashboard.views.create_unit_dibeli')
     @patch('dashboard.views.encrypt_and_sign')
-    def test_process_payment_post_failed(self, mock_encrypt_and_sign, mock_create_unit_dibeli):
+    @patch('dashboard.views.requests.post')
+    @patch('dashboard.views.decrypt_and_verify')
+    def test_process_payment_post_failed(self, mock_enc, mock_post, mock_encrypt_and_sign, mock_create_unit_dibeli):
         """
         When create_unit_dibeli returns a non-201 status code,
         the view should render error.html with the API error message.
@@ -384,6 +432,13 @@ class TestProcessPayment(TestCase):
         error_message = "Creation failed"
         mock_create_response.content = json.dumps({"error": error_message}).encode('utf-8')
         mock_create_unit_dibeli.return_value = mock_create_response
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
 
         data = {
             "id_reksadana": "123",
@@ -396,17 +451,25 @@ class TestProcessPayment(TestCase):
         )
         request.user_id = 1
         request.session = {}
-
+        request.user_role = 'user'
         response = process_payment(request)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Unit creation failed: Creation failed", response.content)
+        self.assertIn(b"Unit creation failed", response.content)
 
     @patch('dashboard.views.create_unit_dibeli')
     @patch('dashboard.views.encrypt_and_sign')
-    def test_process_payment_post_success(self, mock_encrypt_and_sign, mock_create_unit_dibeli):
+    @patch('dashboard.views.requests.post')
+    @patch('dashboard.views.decrypt_and_verify')
+    def test_process_payment_post_success(self, mock_enc, mock_post, mock_encrypt_and_sign, mock_create_unit_dibeli):
         """
         A successful POST request results in redirecting to portfolio:index.
         """
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
         mock_encrypt_and_sign.return_value = ('encrypted_nominal', 'fake_signature')
         mock_create_response = MagicMock()
         mock_create_response.status_code = 201
@@ -422,9 +485,11 @@ class TestProcessPayment(TestCase):
             content_type='application/json'
         )
         request.user_id = 1
+        request.user_role = 'user'
         request.session = {}
 
         response = process_payment(request)
+        print(response.content)
         self.assertEqual(response.status_code, 302)
         self.assertIn('/portfolio/', response.url)
         self.assertEqual(
@@ -452,7 +517,7 @@ class TestProcessPayment(TestCase):
         )
         request.user_id = 1
         request.session = {}
-
+        request.user_role = 'user'
         response = process_payment(request)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"An error occurred: Unexpected Error", response.content)

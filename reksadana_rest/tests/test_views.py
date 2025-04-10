@@ -261,7 +261,8 @@ class ReksadanaViewTests(TestCase):
             user_id=self.user.id,
             id_reksadana=self.reksadana,
             nominal=1000000,
-            waktu_pembelian=datetime.datetime.now()
+            waktu_pembelian=datetime.datetime.now(),
+            nav_dibeli = 1
         )
         
         request = MockRequest(method='GET', user_id=self.user.id)
@@ -294,7 +295,8 @@ class ReksadanaViewTests(TestCase):
             user_id=self.user.id,
             id_reksadana=self.reksadana,
             nominal=1000000,
-            waktu_pembelian=datetime.datetime.now()
+            waktu_pembelian=datetime.datetime.now(),
+            nav_dibeli = 1
         )
         
         data = {'id_unitdibeli': unit.id}
@@ -348,8 +350,8 @@ class ReksadanaViewTests(TestCase):
         }
         request = MockRequest(method='POST', post_data=invalid_data)
         response = create_reksadana(request)
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('Failed to create reksadana', response.content.decode())
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('All fields are required', response.content.decode())
 
     # New test for edit_reksadana with invalid category
     def test_edit_reksadana_invalid_category(self):
@@ -364,7 +366,7 @@ class ReksadanaViewTests(TestCase):
         request = MockRequest(method='POST', post_data=edit_data)
         response = edit_reksadana(request)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('Invalid selection', response.content.decode())
+        self.assertIn('Invalid category ID', response.content.decode())
 
 
     # New test for create_unit_dibeli success with mock decrypt
@@ -528,7 +530,8 @@ class ReksadanaViewTests(TestCase):
             user_id=self.user.id,
             id_reksadana=self.reksadana,
             nominal=1000000,
-            waktu_pembelian=datetime.datetime.now()
+            waktu_pembelian=datetime.datetime.now(),
+            nav_dibeli = 1
         )
         
         # Using patch to mock the authorization check

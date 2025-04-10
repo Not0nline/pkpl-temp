@@ -19,7 +19,6 @@ def index(request):
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
     try:
-        # Ensure user_id is set on request if it's in the session
         if hasattr(request, 'session') and not hasattr(request, 'user_id') and 'user_id' in request.session:
             request.user_id = request.session['user_id']
         

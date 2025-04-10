@@ -16,8 +16,6 @@ def create_reksadana(request):
         kustodian_id = sanitize_input(request.POST.get('kustodian_id'))
         penampung_id = sanitize_input(request.POST.get('penampung_id'))
         risk_level = sanitize_input(request.POST.get('tingkat_resiko'))
-
-        print(name, initial_value, category_id, kustodian_id, penampung_id, risk_level)
         
         # Validate form data
         if not all([name, initial_value, category_id, kustodian_id, penampung_id, risk_level]):
@@ -94,6 +92,7 @@ def get_all_reksadana(request):
     if request.method == "GET":
         reksadana_list = Reksadana.objects.all().values()
         return JsonResponse({"reksadanas": list(reksadana_list)}, status=200)
+    return JsonResponse({},status=405)
 
 def create_unit_dibeli(request):
     if request.method == "POST":

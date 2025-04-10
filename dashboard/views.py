@@ -113,14 +113,12 @@ def beli_unit(request):
                                     headers={'Authorization': request.COOKIES.get('jwt_token')})
             
             if response.status_code != 200:
-                print("error ngambil card data")
                 return render(request, "error.html", {
                     "error": "Failed to retrieve card information",
                     "back_url": "/"
                 })
             
             card_data = response.json()
-            print("card data: ", card_data)
             card_number = decrypt_and_verify(card_data['credit_card'], card_data['signature'])
             
             # Process payment
@@ -214,7 +212,7 @@ def process_payment(request):
                 if res.status_code != 201:
                     error_data = json.loads(res.content.decode('utf-8'))
                     return render(request, "error.html", {
-                        "error": f"Unit creation failed: {error_data.get('error', 'Unknown error')}",
+                        "error": f"Unit creation failed: {error_data.get('error', 'Unknown error')}, zczc{res.status_code}",
                         "back_url": "/"
                     })
 

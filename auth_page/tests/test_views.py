@@ -235,7 +235,7 @@ class TestHomeView(TestCase):
         request = self.factory.get(reverse('auth_page:home'))
         response = self.apply_middleware(request)
         if response is not request:
-            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.status_code, 302)
 
 class TestLogoutView(TestCase):
     def setUp(self):

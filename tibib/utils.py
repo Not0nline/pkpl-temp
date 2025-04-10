@@ -12,7 +12,6 @@ def handle_error(request, status_code, error_message, back_url=None):
         'back_url': back_url or '/',
         'user_role':request.user_role
     }
-    print("request", request.user_role)
     return render(request, "error.html", context, status=status_code)
 
 def encrypt_and_sign(message):
