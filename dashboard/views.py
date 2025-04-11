@@ -223,6 +223,7 @@ def process_payment(request):
                 return redirect('portfolio:index')
             
         except Exception as e:
+            traceback.print_exc()
             print(f"Exception in process_payment: {str(e)}")
             return render(request, "error.html", {
                 "error": f"An error occurred: {str(e)}",
@@ -230,3 +231,4 @@ def process_payment(request):
             })
 
     return HttpResponse("Method not allowed", status=405)
+import traceback

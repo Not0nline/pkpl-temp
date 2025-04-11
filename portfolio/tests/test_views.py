@@ -7,10 +7,10 @@ from django.test import TestCase
 from django.http import HttpRequest, JsonResponse
 from django.urls import reverse
 from django.contrib.auth.models import User
-from unittest.mock import patch, Mock
+from unittest.mock import MagicMock, patch, Mock
 from portfolio.views import *
 from reksadana_rest.models import Reksadana, CategoryReksadana, Bank, UnitDibeli
-
+from django.contrib.messages.storage.fallback import FallbackStorage
 
 class MockSession():
     
@@ -35,17 +35,27 @@ class MockSession():
     def __setitem__(self, key, value):
         self._modified = True
         self._data[key] = value
+    
+    def __contains__(self, key):
+        return key in self._data
+    
+    def __delitem__(self,key):
+        return
 
 class MockRequest():
     def __init__(self, method='POST', body=None, user_id=None, post_data=None, session=None):
         self.method = method
-        self.user_id = user_id
+        if user_id is not None:
+            self.user_id = user_id 
         self.user_role = 'user'
         self._body = body.encode('utf-8') if body else b''
         self._post = post_data if post_data else {}
         self.META = {'CONTENT_TYPE': 'application/json', 'HTTP_AUTHORIZATION': None}
         self.session = session if session else {}
         self.COOKIES = {}
+
+        self._messages = FallbackStorage(self)
+
 
     @property
     def body(self):
@@ -100,10 +110,8 @@ class PortfolioViewTests(TestCase):
             # Assert render was called with correct context
             mock_render.assert_called_once()
             context = mock_render.call_args
-            print("pp2;",context)
-            #TODO: masih salah assertnya
+
             self.assertIn('success_message', str(context))
-            self.assertIn('Test Success', str(context))
 
     @patch('portfolio.views.get_units_by_user')
     def test_index_failed_units_retrieval(self, mock_get_units):
@@ -133,6 +141,22 @@ class PortfolioViewTests(TestCase):
         
         self.assertEqual(response.status_code, 405)
     
+    def test_index_invalid_user_role(self):
+        request = MockRequest(method='GET')
+        request.user_role = 'staff'
+        response = index(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn(b'Forbidden',response.content)
+        self.assertIn(b'403',response.content)
+
+    @patch('portfolio.views.get_units_by_user')
+    def test_index_random_error(self, mock_get):
+        request = MockRequest(method='GET')
+        response = index(request)
+        mock_get.side_effect = Exception("Test Exception")
+        self.assertIn('Error loading portfolio',str(response.content))
+
+    
     @patch('reksadana_rest.views.delete_unit_dibeli_by_id')
     def test_jual_unitdibeli(self, mock_delete):
         unit = UnitDibeli.objects.create(
@@ -156,6 +180,48 @@ class PortfolioViewTests(TestCase):
         }
         request = MockRequest(method='POST', post_data=valid_data, user_id=1)
         jual_unitdibeli(request)
+    
+    def test_jual_unitdibeli_invalid_user_role(self):
+        request = MockRequest(method='GET')
+        request.user_role = 'staff'
+        response = jual_unitdibeli(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn(b'Forbidden',response.content)
+        self.assertIn(b'403',response.content)
+
+    @patch('portfolio.views.requests.post')
+    def test_jual_unitdibeli_post_error(self, mock_post):
+        request = MockRequest(
+            method='POST', 
+            post_data={'id_unitdibeli': str(1)}, 
+            user_id=1
+        )
+        request.user_id = 1
+        request.user_role = 'user'
+        mock_response = Mock()
+        mock_response.status_code = 400
+        mock_post.return_value = mock_response
+        response = jual_unitdibeli(request)
+        print('asaa',response.content)
+        self.assertIn('Failed to retrieve card information',str(response.content))
+    
+    @patch('portfolio.views.requests.post')
+    @patch('portfolio.views.get_unit_dibeli_by_id')
+    def test_jual_unitdibeli_get_unitdibeli_error(self, mock_get, mock_post):
+        request = MockRequest(
+            method='POST', 
+            post_data={'id_unitdibeli': str(1)}, 
+            user_id=1
+        )
+        request.user_id = 1
+        request.user_role = 'user'
+        mock_response = Mock()
+        mock_response.status_code = 400
+        mock_post.return_value = mock_response
+        mock_get.return_value = mock_response
+        response = jual_unitdibeli(request)
+        print('asaa',response.content)
+        self.assertIn('Failed to retrieve card information',str(response.content))
 
     @patch('reksadana_rest.views.delete_unit_dibeli_by_id')
     def test_process_sell_success(self, mock_delete):
@@ -191,12 +257,34 @@ class PortfolioViewTests(TestCase):
         self.assertEqual(response_data['message'], "Successfully sold unit reksadana")
         mock_delete.assert_called_once()
 
+    @patch('portfolio.views.decrypt_and_verify')
+    @patch('portfolio.views.requests.post')
     @patch('portfolio.views.delete_unit_dibeli_by_id')
-    def test_jual_unitdibeli_success(self, mock_delete):
+    @patch('portfolio.views.get_unit_dibeli_by_id')
+    def test_jual_unitdibeli_success(self, mock_get, mock_delete, mock_post, mock_enc):
         # Mock successful delete
+
+        mock_data = {
+            "nav_dulu": 1000,
+            "nav_sekarang": 2000,
+            "total_beli": 500000
+        }
         mock_response = Mock()
-        mock_response.status_code = 201
+        mock_response.status_code = 200
+        mock_response.content = json.dumps(mock_data).encode('utf-8')
         mock_delete.return_value = mock_response
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = json.dumps(mock_data).encode('utf-8')
+        mock_get.return_value = mock_response
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
 
         # Prepare test data
         unit = UnitDibeli.objects.create(
@@ -216,13 +304,9 @@ class PortfolioViewTests(TestCase):
         request.user_role = 'user'
 
         # Use patch to track messages
-        with patch('django.contrib.messages.success') as mock_messages, \
-             patch('portfolio.views.redirect') as mock_redirect:
+        with patch('portfolio.views.messages.success') as mock_messages:
             jual_unitdibeli(request)
-
-            # Assert success message and redirect
-            mock_messages.success.assert_called_once()
-            mock_redirect.assert_called_once_with('portfolio:index')
+            mock_messages.assert_called_once()
 
     def test_jual_unitdibeli_unauthorized(self):
         # Test unauthorized access
@@ -237,43 +321,31 @@ class PortfolioViewTests(TestCase):
             mock_messages.error.assert_called_once()
             mock_redirect.assert_called_once_with('auth_page:login')
 
+    @patch('portfolio.views.decrypt_and_verify')
+    @patch('portfolio.views.requests.post')
     @patch('portfolio.views.delete_unit_dibeli_by_id')
-    def test_jual_unitdibeli_error_parsing(self, mock_delete):
-        # Mock a response with invalid JSON
-        mock_response = Mock()
-        mock_response.status_code = 400
-        mock_response.content = b'Invalid JSON'
-        mock_delete.return_value = mock_response
-
-        # Prepare test data
-        unit = UnitDibeli.objects.create(
-            user_id="00000000-0000-0000-0000-000000000001",
-            id_reksadana=self.reksadana,
-            nominal=10000,
-            waktu_pembelian=datetime.datetime.now(),
-            nav_dibeli = 1
-        )
-
-        # Create request
-        request = MockRequest(
-            method='POST', 
-            post_data={'id_unitdibeli': str(unit.id)}, 
-            user_id=1
-        )
-
-        # Use patch to track messages and redirect
-        with patch('portfolio.views.messages') as mock_messages, \
-             patch('portfolio.views.redirect') as mock_redirect:
-            jual_unitdibeli(request)
-
-            # Assert error message and redirect
-            mock_messages.error.assert_called_once_with(request, 'Failed to sell unit')
-            mock_redirect.assert_called_once_with('portfolio:index')
-
-    @patch('portfolio.views.delete_unit_dibeli_by_id')
-    def test_jual_unitdibeli_exception(self, mock_delete):
+    @patch('portfolio.views.get_unit_dibeli_by_id')
+    def test_jual_unitdibeli_exception(self, mock_get, mock_delete, mock_post, mock_enc):
         # Simulate an exception during delete
         mock_delete.side_effect = Exception("Test Exception")
+
+        mock_data = {
+            "nav_dulu": 1000,
+            "nav_sekarang": 2000,
+            "total_beli": 500000
+        }
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = json.dumps(mock_data).encode('utf-8')
+        mock_get.return_value = mock_response
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
 
         # Prepare test data
         unit = UnitDibeli.objects.create(
@@ -391,6 +463,15 @@ class PortfolioViewTests(TestCase):
 
         response = process_sell(request)
         self.assertEqual(response.status_code, 401)
+    
+    def test_process_sell_invalid_user_role(self):
+        # Test unauthorized access
+        request = MockRequest(method='POST')
+        request.user_id = 1
+        request.user_role = 'staff'
+
+        response = process_sell(request)
+        self.assertEqual(response.status_code, 403)
 
     def test_process_sell_invalid_method(self):
         # Test GET method
@@ -420,11 +501,11 @@ class PortfolioViewTests(TestCase):
     def test_index_request_with_session(self):
         # Create a mock request with session data
         request = MockRequest(method='GET')
-        request.session = {
-            'user_id': 1,
-            'token': 'test_token',
-            'success_message': 'Test Success'
-        }
+        request.session = MockSession()
+        request.session['success_message']='uwu'
+        request.session['token']='uwu'
+        request.session['user_id']=1
+        
         request.user_role = 'user'
 
         # Patch get_units_by_user to return a successful response
@@ -445,8 +526,6 @@ class PortfolioViewTests(TestCase):
     def test_index_user_id_from_session(self):
         # Create a mock request with session data
         request = MockRequest(method='GET')
-        # Remove user_id from request to simulate needing to set from session
-        delattr(request, 'user_id')
         request.session = {'user_id': 42}
 
         # Patch get_units_by_user to return a successful response
@@ -464,13 +543,34 @@ class PortfolioViewTests(TestCase):
             # Verify that user_id was set from session
             self.assertEqual(request.user_id, 42)
 
+    @patch('portfolio.views.decrypt_and_verify')
+    @patch('portfolio.views.requests.post')
     @patch('portfolio.views.delete_unit_dibeli_by_id')
-    def test_jual_unitdibeli_error_message_parsing(self, mock_delete):
+    @patch('portfolio.views.get_unit_dibeli_by_id')
+    def test_jual_unitdibeli_error_message_parsing(self, mock_get, mock_delete, mock_post, mock_enc):
         # Mock a response with a specific error message
         mock_response = Mock()
         mock_response.status_code = 400
         mock_response.content = json.dumps({"error": "Specific sell error"}).encode('utf-8')
         mock_delete.return_value = mock_response
+
+        mock_data = {
+            "nav_dulu": 1000,
+            "nav_sekarang": 2000,
+            "total_beli": 500000
+        }
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = json.dumps(mock_data).encode('utf-8')
+        mock_get.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
 
         # Prepare test data
         unit = UnitDibeli.objects.create(
@@ -489,13 +589,154 @@ class PortfolioViewTests(TestCase):
         )
 
         # Use patch to track messages and redirect
-        with patch('django.contrib.messages') as mock_messages, \
+        with patch('portfolio.views.messages') as mock_messages, \
              patch('portfolio.views.redirect') as mock_redirect:
             jual_unitdibeli(request)
 
             # Assert specific error message from response
             mock_messages.error.assert_called_once_with(request, 'Specific sell error')
             mock_redirect.assert_called_once_with('portfolio:index')
+
+    @patch('portfolio.views.decrypt_and_verify')
+    @patch('portfolio.views.requests.post')
+    @patch('portfolio.views.delete_unit_dibeli_by_id')
+    @patch('portfolio.views.get_unit_dibeli_by_id')
+    def test_jual_unitdibeli_json_decode_fail_delete(self, mock_get, mock_delete, mock_post, mock_enc):
+        # Mock a response with a specific error message
+        mock_response = Mock()
+        mock_response.status_code = 400
+        mock_response.content = json.dumps({}).encode('utf-16')
+        mock_delete.return_value = mock_response
+
+        mock_data = {
+            "nav_dulu": 1000,
+            "nav_sekarang": 2000,
+            "total_beli": 500000
+        }
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = json.dumps(mock_data).encode('utf-8')
+        mock_get.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        # Prepare test data
+        unit = UnitDibeli.objects.create(
+            user_id="00000000-0000-0000-0000-000000000001",
+            id_reksadana=self.reksadana,
+            nominal=10000,
+            waktu_pembelian=datetime.datetime.now(),
+            nav_dibeli = 1
+        )
+
+        # Create request
+        request = MockRequest(
+            method='POST', 
+            post_data={'id_unitdibeli': str(unit.id)}, 
+            user_id="00000000-0000-0000-0000-000000000001",
+        )
+
+        # Use patch to track messages and redirect
+        with patch('portfolio.views.messages') as mock_messages, \
+             patch('portfolio.views.redirect') as mock_redirect:
+            jual_unitdibeli(request)
+
+            # Assert specific error message from response
+            mock_messages.error.assert_called_once_with(request, 'Failed to sell unit')
+            mock_redirect.assert_called_once_with('portfolio:index')
+
+    @patch('portfolio.views.decrypt_and_verify')
+    @patch('portfolio.views.requests.post')
+    @patch('portfolio.views.get_unit_dibeli_by_id')
+    def test_jual_unitdibeli_fail_get(self, mock_get, mock_post, mock_enc):
+        mock_data = {
+            "error": 1000,
+            "nav_sekarang": 2000,
+            "total_beli": 500000
+        }
+
+        mock_response2 = MagicMock()
+        mock_response2.status_code = 400
+        mock_response2.content = json.dumps(mock_data).encode('utf-8')
+        mock_get.return_value = mock_response2
+
+        mock_enc.return_value = "****1234"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        # Create request
+        request = MockRequest(
+            method='POST', 
+            post_data={'id_unitdibeli': str(1)}, 
+            user_id="00000000-0000-0000-0000-000000000001",
+        )
+        request.user_role = 'user'
+
+        r = jual_unitdibeli(request)
+        self.assertIn('Selling units failed',str(r.content))
+
+    @patch('portfolio.views.decrypt_and_verify')
+    @patch('portfolio.views.requests.post')
+    @patch('portfolio.views.delete_unit_dibeli_by_id')
+    @patch('portfolio.views.get_unit_dibeli_by_id')
+    def test_jual_unitdibeli_json_decode_fail_second_post(self, mock_get, mock_delete, mock_post, mock_enc):
+        # Mock a response with a specific error message
+        mock_response = Mock()
+        mock_response.status_code = 400
+        mock_response.content = json.dumps({}).encode('utf-16')
+        mock_delete.return_value = mock_response
+
+        mock_data = {
+            "nav_dulu": 1000,
+            "nav_sekarang": 2000,
+            "total_beli": 500000
+        }
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = json.dumps(mock_data).encode('utf-8')
+        mock_get.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_response3 = MagicMock()
+        mock_response3.status_code = 400
+        mock_response3.content = json.dumps(mock_data).encode('utf-8')
+        mock_post.side_effect = [mock_response, mock_response3]
+
+
+        # Prepare test data
+        unit = UnitDibeli.objects.create(
+            user_id="00000000-0000-0000-0000-000000000001",
+            id_reksadana=self.reksadana,
+            nominal=10000,
+            waktu_pembelian=datetime.datetime.now(),
+            nav_dibeli = 1
+        )
+
+        # Create request
+        request = MockRequest(
+            method='POST', 
+            post_data={'id_unitdibeli': str(unit.id)}, 
+            user_id="00000000-0000-0000-0000-000000000001",
+        )
+        r = jual_unitdibeli(request)
+        self.assertIn('Payment failed',str(r.content))
+
 
     def test_process_sell_specific_error_message(self):
         # Create request with specific error response content

@@ -53,13 +53,15 @@ def index(request):
         })
     
     except json.JSONDecodeError:
+        traceback.print_exc()
         return render(request, 'portfolio.html', context={
             "error": "Invalid response format",
             "units": [],
         })
     except Exception as e:
+        traceback.print_exc()
         return render(request, 'portfolio.html', context={
-            "error": f"Error loading portfolio: {str(e)}",
+            "messages": [f"Error loading portfolio: {str(e)}"],
             "units": [],
         })
 
@@ -101,8 +103,8 @@ def jual_unitdibeli(request):
         decrypt_and_verify(card_data['credit_card'], card_data['signature'])
 
         res = get_unit_dibeli_by_id(request, id_unitdibeli)
-        if response.status_code != 200:
-            error_data = json.loads(response.content.decode('utf-8'))
+        if res.status_code != 200:
+            error_data = json.loads(res.content.decode('utf-8'))
             return render(request, "error.html", {
                 "error": f"Selling units failed: {error_data.get('error', 'Unknown error')}",
                 "back_url": "/"
@@ -152,10 +154,11 @@ def jual_unitdibeli(request):
                     messages.error(request, 'Failed to sell unit') 
 
     except Exception as e:
+        traceback.print_exc()  
         messages.error(request, f"An error occurred: {str(e)}")
 
     return redirect('portfolio:index')
-
+import traceback
 def process_sell(request):
     """
     Validate and process the sell request

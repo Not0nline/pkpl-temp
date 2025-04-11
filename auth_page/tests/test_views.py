@@ -5,7 +5,7 @@ from django.conf import settings
 from django.urls import reverse
 import jwt
 import datetime
-from auth_page.views import login_view, logout_view, register_view
+from auth_page.views import handler404, login_view, logout_view, register_view
 from tibib.middleware import JWTAuthenticationMiddleware
 
 class TestJWTAuthenticationMiddleware(TestCase):
@@ -258,3 +258,14 @@ class TestLogoutView(TestCase):
         response = logout_view(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('auth_page:login'))
+
+class Test404(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_404(self):
+        request = self.factory.get('/uwu')
+        request.user_role = 'user'
+        response = handler404(request)
+        self.assertEqual(response.status_code, 200) 
+        self.assertIn(b'Page Not Found', response.content)

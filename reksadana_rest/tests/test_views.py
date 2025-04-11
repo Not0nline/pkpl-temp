@@ -549,3 +549,60 @@ class ReksadanaViewTests(TestCase):
             self.assertEqual(response.status_code, 200)
             response_data = json.loads(response.content)
             self.assertEqual(response_data["message"], "UnitDibeli deleted successfully")
+
+    def test_get_unit_dibeli_by_id(self):
+        unit = UnitDibeli.objects.create(
+            user_id=self.user.id,
+            id_reksadana=self.reksadana,
+            nominal=1000000,
+            waktu_pembelian=datetime.datetime.now(),
+            nav_dibeli = 1
+        )
+        with patch('reksadana_rest.views.get_object_or_404') as mock_get:
+            # Have the mock return our created unit
+            mock_get.return_value = unit
+            
+            data = {'id_unitdibeli': unit.id}
+            request = MockRequest(method='GET', body=json.dumps(data), user_id=self.user.id)
+            
+            # Act: Call the function
+            response = get_unit_dibeli_by_id(request, unit.id)
+            
+            # Assert: Verify function returns expected success response
+            self.assertEqual(response.status_code, 200)
+    
+    @patch("reksadana_rest.views.random.random")
+    def test_success_response(self, mock_random):
+        mock_random.return_value = 0.5  # < 0.9
+        request = MockRequest(method='GET')
+        response = check_payment_gateway_status(request)
+
+        assert response.status_code == 200
+        assert json.loads(response.content) == {
+            "status": "success",
+            "message": "Request processed successfully"
+        }
+
+    @patch("reksadana_rest.views.random.random")
+    def test_payment_required_response(self, mock_random):
+        mock_random.return_value = 0.93  # > 0.9 and <= 0.95
+        request = MockRequest(method='GET')
+        response = check_payment_gateway_status(request)
+
+        assert response.status_code == 402
+        assert json.loads(response.content) == {
+            "status": "error",
+            "error": "Payment required"
+        }
+
+    @patch("reksadana_rest.views.random.random")
+    def test_internal_server_error_response(self, mock_random):
+        mock_random.return_value = 0.97  # > 0.95
+        request = MockRequest(method='GET')
+        response = check_payment_gateway_status(request)
+
+        assert response.status_code == 500
+        assert json.loads(response.content) == {
+            "status": "error",
+            "error": "Internal server error"
+        }

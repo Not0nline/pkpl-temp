@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
@@ -25,8 +26,28 @@ class TestDashboard(TestCase):
         self.assertEqual(response.status_code, 302)
         # Typically you'd expect it to redirect to something like '/login' 
         self.assertIn('/login/', response.url)
-    
-    
+
+    def test_get_dashboard_staff(self):
+        request = self.factory.get(self.url)
+        request.user_role = 'staff'
+        response = dashboard(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn(b"Forbidden: You don&#x27;t have permission to access this page", response.content)
+
+    def test_beli_unit_staff(self):
+        request = self.factory.get(self.url)
+        request.user_role = 'staff'
+        response = beli_unit(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn(b"Forbidden: You don&#x27;t have permission to access this page", response.content)
+
+    def test_process_payment_staff(self):
+        request = self.factory.get(self.url)
+        request.user_role = 'staff'
+        response = process_payment(request)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn(b"Forbidden: You don&#x27;t have permission to access this page", response.content)
+
     @patch('dashboard.views.get_all_reksadana')
     def test_get_fetch_all_reksadana_failed(self, mock_get_all_reksadana):
         """
@@ -50,7 +71,8 @@ class TestDashboard(TestCase):
         self.assertIn(b'Failed to load reksadana data', response.content)
     
     @patch('dashboard.views.get_all_reksadana')
-    def test_get_dashboard_success(self, mock_get_all_reksadana):
+    @patch("dashboard.views.get_reksadana_history")
+    def test_get_dashboard_success(self, mock_get_history, mock_get_all_reksadana):
         """
         Successful scenario: user is authenticated, 
         get_all_reksadana returns a 200 status, 
@@ -61,6 +83,18 @@ class TestDashboard(TestCase):
         request.user_username = 'testuser'
         request.user_role = 'user'
 
+        fake_reksadanas = [
+        {"id_reksadana": 1, "name": "Reksa Dana A"},
+        {"id_reksadana": 2, "name": "Reksa Dana B"},
+        ]
+        mock_get_all_reksadana.return_value = JsonResponse({"reksadanas": fake_reksadanas})
+
+        # Mocked history response for each reksadana
+        mock_get_history.return_value = JsonResponse(
+            [{"date": "2024-01-01T00:00:00Z", "nav": 1000, "aum": 100000}],
+            safe=False
+        )
+
         response = dashboard(request)
 
         # Check rendered template & context
@@ -68,6 +102,43 @@ class TestDashboard(TestCase):
         # The content should contain the reksadana data
         self.assertIn(b'Reksadana', response.content)
         self.assertIn(b'testuser', response.content)
+    
+    @patch('dashboard.views.get_all_reksadana')
+    @patch("dashboard.views.get_reksadana_history")
+    def test_get_dashboard_empty_history(self, mock_get_history, mock_get_all_reksadana):
+        """
+        Successful scenario: user is authenticated, 
+        get_all_reksadana returns a 200 status, 
+        and we render 'dashboard.html' with reksadanas.
+        """
+        request = self.factory.get(self.url)
+        request.user_id = 1
+        request.user_username = 'testuser'
+        request.user_role = 'user'
+
+        fake_reksadanas = [
+        {"id_reksadana": 1, "name": "Reksa Dana A"},
+        ]
+        mock_get_all_reksadana.return_value = JsonResponse({"reksadanas": fake_reksadanas})
+
+        # Mocked history response for each reksadana
+        mock_get_history.side_effect = [JsonResponse(
+            [{"date": "2024-01-01T00:00:00Z", "nav": 1000, "aum": 100000}],
+            safe=False,
+            status=400
+        ),JsonResponse(
+            [{"date": "2024-01-01T00:00:00Z", "nav": 1000, "aum": 100000}],
+            safe=False,
+            status=400
+        )]
+
+        response = dashboard(request)
+
+        # Check rendered template & context
+        self.assertEqual(response.status_code, 200)
+        # The content should contain the reksadana data
+        self.assertIn(b'Reksadana', response.content)
+        self.assertIn(b'testuser', response.content)    
     
     @patch('dashboard.views.get_all_reksadana')
     def test_get_dashboard_error(self, mock_get_all_reksadana):
@@ -155,6 +226,40 @@ class TestBeliUnit(TestCase):
         self.assertIn(b"Confirm Payment - Tibib", response.content)
         self.assertIn(b"123", response.content)
         self.assertIn(b"20000", response.content)
+
+    @patch('dashboard.views.decrypt_and_verify')
+    @patch('dashboard.views.requests.post')
+    def test_beli_unit_post_fails(self, mock_post, mock_enc):
+        """
+        When request.method == 'POST' and content_type == 'application/json',
+        we parse the JSON from request.body.
+        Expect a 'payment_confirmation.html' template if data is valid.
+        """
+        
+        data = {
+            "id_reksadana": "123",
+            "nominal": "20000"
+        }
+        request = self.factory.post(
+            self.url, 
+            data=json.dumps(data), 
+            content_type='application/json'
+        )
+        request.user_id = 1  # authenticated
+        request.user_role = 'user'
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+        
+
+        response = beli_unit(request)
+
+        # Because it's valid data, check that we see payment_confirmation
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Failed to retrieve card information", response.content)
 
     @patch('dashboard.views.decrypt_and_verify')
     @patch('dashboard.views.requests.post')
@@ -521,3 +626,87 @@ class TestProcessPayment(TestCase):
         response = process_payment(request)
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"An error occurred: Unexpected Error", response.content)
+
+    @patch('dashboard.views.create_unit_dibeli')
+    @patch('dashboard.views.encrypt_and_sign')
+    @patch('dashboard.views.requests.post')
+    @patch('dashboard.views.decrypt_and_verify')
+    def test_process_payment_post_success(self, mock_enc, mock_post, mock_encrypt_and_sign, mock_create_unit_dibeli):
+        """
+        A successful POST request results in redirecting to portfolio:index.
+        """
+        mock_response = MagicMock()
+        mock_response.status_code = 402
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+        mock_encrypt_and_sign.return_value = ('encrypted_nominal', 'fake_signature')
+        mock_create_response = MagicMock()
+        mock_create_response.status_code = 201
+        mock_create_unit_dibeli.return_value = mock_create_response
+        mock_data = {
+            "nav_dulu": 1000,
+            "nav_sekarang": 2000,
+            "total_beli": 500000
+        }
+
+        mock_response = MagicMock()
+        mock_response.status_code = 402
+        mock_response.content = json.dumps(mock_data).encode('utf-8')
+
+        mock_response3 = MagicMock()
+        mock_response3.status_code = 200
+        mock_response3.content = json.dumps(mock_data).encode('utf-8')
+        mock_post.side_effect = [mock_response3, mock_response,mock_response,mock_response,mock_response,mock_response]
+
+        data = {
+            "id_reksadana": "555",
+            "nominal": "35000"
+        }
+        request = self.factory.post(
+            self.url,
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        request.user_id = 1
+        request.user_role = 'user'
+        request.session = {}
+
+        response = process_payment(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Payment failed',str(response.content))
+
+    @patch('dashboard.views.decrypt_and_verify')
+    @patch('dashboard.views.requests.post')
+    def test_beli_unit_post_credit_card_fails(self, mock_post, mock_enc):
+        """
+        When request.method == 'POST' and content_type == 'application/json',
+        we parse the JSON from request.body.
+        Expect a 'payment_confirmation.html' template if data is valid.
+        """
+        
+        data = {
+            "id_reksadana": "123",
+            "nominal": "20000"
+        }
+        request = self.factory.post(
+            self.url, 
+            data=json.dumps(data), 
+            content_type='application/json'
+        )
+        request.user_id = 1  # authenticated
+        request.user_role = 'user'
+        mock_response = MagicMock()
+        mock_response.status_code = 400
+        mock_response.json.return_value = {"credit_card": 1, "signature": "****1234"}
+        mock_post.return_value = mock_response
+
+        mock_enc.return_value = "****1234"
+        
+
+        response = process_payment(request)
+
+        # Because it's valid data, check that we see payment_confirmation
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Failed to retrieve card information", response.content)
