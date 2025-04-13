@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from reksadana_rest.views import get_units_by_user, delete_unit_dibeli_by_id, get_unit_dibeli_by_id
 from tibib.utils import sanitize_input, handle_error, decrypt_and_verify
+from reksadana_rest.models import Reksadana
 
 def index(request):
     """
@@ -46,6 +47,9 @@ def index(request):
             request.session.modified = True
         
         data = json.loads(response.content)
+        for datum in data:
+            datum['current_value'] = Reksadana.objects.get(id_reksadana = datum['id_reksadana_id']).nav/datum['nav_dibeli']*datum['nominal']
+        
         return render(request, 'portfolio.html', context={
             "units": data,
             "success_message": success_message,
@@ -103,8 +107,8 @@ def jual_unitdibeli(request):
         decrypt_and_verify(card_data['credit_card'], card_data['signature'])
 
         res = get_unit_dibeli_by_id(request, id_unitdibeli)
-        if res.status_code != 200:
-            error_data = json.loads(res.content.decode('utf-8'))
+        if response.status_code != 200:
+            error_data = json.loads(response.content.decode('utf-8'))
             return render(request, "error.html", {
                 "error": f"Selling units failed: {error_data.get('error', 'Unknown error')}",
                 "back_url": "/"

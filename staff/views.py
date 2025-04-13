@@ -71,7 +71,7 @@ def edit_reksadana_staff(request):
     if request.method == 'POST':
         try:
             edit_response = edit_reksadana(request)
-            if edit_response.status_code == 200:
+            if edit_response.status_code == 201:
                 return redirect('/staff/dashboard/')
             
             error_data = json.loads(edit_response.content)
